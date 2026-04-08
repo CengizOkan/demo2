@@ -11,7 +11,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
 from sdks.novavision.src.media.image import Image
 from sdks.novavision.src.base.component import Component
 from sdks.novavision.src.helper.executor import Executor
-from components.Package.src.utils.response import build_response
+from components.DemoPackage1.src.utils.response import build_response
+from components.DemoPackage1.src.models.PackageModel import PackageModel
 from components.Package.src.models.PackageModel import PackageModel
 
 
@@ -19,9 +20,13 @@ class Package(Component):
     def __init__(self, request, bootstrap):
         super().__init__(request, bootstrap)
         self.request.model = PackageModel(**(self.request.data))
-        self.rotation_degree = self.request.get_param("Degree")
-        self.keep_side = self.request.get_param("KeepSide")
-        self.image = self.request.get_param("inputImage")
+
+        # Seçilen executor'ı (Filter mu Blend mi) alıyoruz
+        self.executor_config = self.request.model.configs.executor
+
+        # Girdileri alırken modeldeki isimleri kullanmalısın
+        # Örn: inputImageOne
+        self.image = self.request.data.get("inputs", {}).get("input1", {}).get("value")
 
     @staticmethod
     def bootstrap(config: dict) -> dict:
