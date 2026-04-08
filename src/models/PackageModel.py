@@ -247,4 +247,4 @@ class DemoPackageConfigs(Configs):
 class PackageModel(Package):
     configs: DemoPackageConfigs
     type: Literal["component"] = "component"
-    name : Literal["demopackage"] = "demopackage"
+    name : Literal["DemoPackage"] = "DemoPackage"
