@@ -425,6 +425,6 @@ class PackageConfigs(Configs):
 
 
 class PackageModel(Package):
-    name: Literal["ImageProcessor"] = "ImageProcessor"
+    name: Literal["DemoPackage"] = "DemoPackage"
     configs: PackageConfigs
     type: Literal["component"] = "component"
