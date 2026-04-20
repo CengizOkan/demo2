@@ -17,13 +17,6 @@ from components.ImageProcessor.src.utils.response import build_compare_response
 
 
 class Compare(Component):
-    """
-    İki görüntüyü seçilen yöntemle karşılaştırır.
-    Histogram modu: renk/parlaklık dağılımını karşılaştırır.
-    FeatureBased modu: anahtar noktaları eşleştirerek yapısal benzerliği ölçer.
-    Çıktı olarak 0.0-1.0 arasında benzerlik skoru ve metin etiketi döndürür.
-    """
-
     SIMILARITY_THRESHOLD = 0.6
 
     def __init__(self, request, bootstrap):
@@ -39,7 +32,6 @@ class Compare(Component):
         return {}
 
     def compare_histogram(self, img1: np.ndarray, img2: np.ndarray) -> float:
-        """Histogram karşılaştırması ile benzerlik skoru hesaplar (0.0 - 1.0)."""
         bins = int(self.request.get_param("HistogramBins") or 256)
         channel = self.request.get_param("HistogramChannel") or "RGB"
 
@@ -61,11 +53,9 @@ class Compare(Component):
                 scores.append(cv2.compareHist(h1, h2, cv2.HISTCMP_CORREL))
             score = float(np.mean(scores))
 
-        # HISTCMP_CORREL -1..1 aralığında döner; 0..1 aralığına normalize et
         return max(0.0, min(1.0, (score + 1.0) / 2.0))
 
     def compare_features(self, img1: np.ndarray, img2: np.ndarray) -> float:
-        """Özellik noktası eşleştirmesi ile benzerlik skoru hesaplar (0.0 - 1.0)."""
         max_kp = int(self.request.get_param("FeatureMaxKeypoints") or 500)
         detector_type = self.request.get_param("FeatureDetector") or "ORB"
 
@@ -96,12 +86,13 @@ class Compare(Component):
         img1 = Image.get_frame(img=self.input_image_one, redis_db=self.redis_db)
         img2 = Image.get_frame(img=self.input_image_two, redis_db=self.redis_db)
 
+        # Karşılaştırma fonksiyonlarına img nesnesinin matrisi (.value) gider
         if self.compare_method == "Histogram":
-            score = self.compare_histogram(img1, img2)
+            score = self.compare_histogram(img1.value, img2.value)
         else:
-            score = self.compare_features(img1, img2)
+            score = self.compare_features(img1.value, img2.value)
 
-        self.output_score = round(score, 4)
+        self.output_score = float(round(score, 4))
         self.output_label = "Similar" if score >= self.SIMILARITY_THRESHOLD else "Different"
 
         return build_compare_response(context=self)

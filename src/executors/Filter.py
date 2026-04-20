@@ -17,12 +17,6 @@ from components.ImageProcessor.src.utils.response import build_filter_response
 
 
 class Filter(Component):
-    """
-    Görüntüye filtre uygulayan executor.
-    Blur modu: Gaussian veya Median blur uygular.
-    Sharpen modu: Belirtilen yoğunlukta keskinleştirme uygular.
-    """
-
     def __init__(self, request, bootstrap):
         super().__init__(request, bootstrap)
         self.request.model = PackageModel(**(self.request.data))
@@ -35,11 +29,9 @@ class Filter(Component):
         return {}
 
     def apply_blur(self, img: np.ndarray) -> np.ndarray:
-        """Seçilen blur moduna ve yarıçapına göre bulanıklaştırma uygular."""
         radius = self.request.get_param("BlurRadius") or 5
         mode = self.request.get_param("BlurMode") or "Gaussian"
 
-        # Kernel boyutu tek sayı olmalı
         ksize = int(radius) if int(radius) % 2 == 1 else int(radius) + 1
         ksize = max(1, ksize)
 
@@ -49,7 +41,6 @@ class Filter(Component):
             return cv2.medianBlur(img, ksize)
 
     def apply_sharpen(self, img: np.ndarray) -> np.ndarray:
-        """Seçilen çekirdek boyutu ve yoğunluğa göre keskinleştirme uygular."""
         intensity = self.request.get_param("SharpenIntensity") or 1.0
         kernel_size = self.request.get_param("SharpenKernel") or "Small"
 
@@ -77,13 +68,14 @@ class Filter(Component):
     def run(self):
         img = Image.get_frame(img=self.input_image, redis_db=self.redis_db)
 
+        # OpenCV fonksiyonlarına sadece matris (.value) gönderilir
         if self.filter_type == "Blur":
-            result = self.apply_blur(img)
+            img.value = self.apply_blur(img.value)
         else:
-            result = self.apply_sharpen(img)
+            img.value = self.apply_sharpen(img.value)
 
         self.output_image = Image.set_frame(
-            img=result,
+            img=img,
             package_uID=self.uID,
             redis_db=self.redis_db
         )

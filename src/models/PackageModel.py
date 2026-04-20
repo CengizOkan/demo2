@@ -85,18 +85,9 @@ class OutputLabel(Output):
 
 # ===========================================================================
 # EXECUTOR 1 — FILTER
-# 1 input (image), 1 output (processed image)
-# dependentDropdown: Blur veya Sharpen
-# Her seçenek → textInput + dropdownlist (2 farklı field tipi)
 # ===========================================================================
 
-# --- Blur seçeneğinin sub-config'leri ---
-
 class BlurRadius(Config):
-    """
-    Bulanıklaştırma yarıçapı. Tek sayı (1, 3, 5...) olmalıdır.
-    Büyük değer daha fazla bulanıklık üretir.
-    """
     name: Literal["BlurRadius"] = "BlurRadius"
     value: int = Field(default=5)
     type: Literal["number"] = "number"
@@ -129,11 +120,6 @@ class OptionMedian(Config):
 
 
 class BlurMode(Config):
-    """
-    Bulanıklaştırma algoritması.
-    Gaussian: gürültü azaltmada etkili.
-    Median: tuz-biber gürültüsüne karşı dayanıklı.
-    """
     name: Literal["BlurMode"] = "BlurMode"
     value: Union[OptionGaussian, OptionMedian]
     type: Literal["object"] = "object"
@@ -156,13 +142,7 @@ class Blur(Config):
         title = "Blur"
 
 
-# --- Sharpen seçeneğinin sub-config'leri ---
-
 class SharpenIntensity(Config):
-    """
-    Keskinleştirme yoğunluğu.
-    1.0 varsayılan değerdir; yüksek değerler daha güçlü keskinleştirme sağlar.
-    """
     name: Literal["SharpenIntensity"] = "SharpenIntensity"
     value: float = Field(default=1.0)
     type: Literal["number"] = "number"
@@ -195,10 +175,6 @@ class OptionKernelLarge(Config):
 
 
 class SharpenKernel(Config):
-    """
-    Keskinleştirme çekirdeği boyutu.
-    Küçük çekirdek ince detayları, büyük çekirdek genel kenarları vurgular.
-    """
     name: Literal["SharpenKernel"] = "SharpenKernel"
     value: Union[OptionKernelSmall, OptionKernelLarge]
     type: Literal["object"] = "object"
@@ -221,13 +197,7 @@ class Sharpen(Config):
         title = "Sharpen"
 
 
-# --- Filter dependentDropdown ---
-
 class ConfigFilterType(Config):
-    """
-    Uygulanacak filtre türünü seçin.
-    Blur görüntüyü yumuşatırken Sharpen kenarları belirginleştirir.
-    """
     name: Literal["ConfigFilterType"] = "ConfigFilterType"
     value: Union[Blur, Sharpen]
     type: Literal["object"] = "object"
@@ -237,8 +207,6 @@ class ConfigFilterType(Config):
         title = "Filter Type"
         json_schema_extra = {"shortDescription": "Filter"}
 
-
-# --- Filter Executor tanımı ---
 
 class FilterInputs(Inputs):
     inputImageOne: InputImageOne
@@ -265,7 +233,6 @@ class FilterResponse(Response):
 
 
 class Filter(Config):
-    """Tek bir görüntüye filtre uygular ve işlenmiş görüntüyü döndürür."""
     name: Literal["Filter"] = "Filter"
     value: Union[FilterRequest, FilterResponse]
     type: Literal["object"] = "object"
@@ -278,18 +245,9 @@ class Filter(Config):
 
 # ===========================================================================
 # EXECUTOR 2 — COMPARE
-# 2 input (2 görüntü), 2 output (skor + etiket)
-# dependentDropdown: Histogram veya FeatureBased
-# Her seçenek → textInput + dropdownlist (2 farklı field tipi)
 # ===========================================================================
 
-# --- Histogram seçeneğinin sub-config'leri ---
-
 class HistogramBins(Config):
-    """
-    Histogram hesaplamasında kullanılacak bin sayısı.
-    Yüksek değer daha hassas karşılaştırma sağlar ancak daha yavaş çalışır.
-    """
     name: Literal["HistogramBins"] = "HistogramBins"
     value: int = Field(default=256)
     type: Literal["number"] = "number"
@@ -322,10 +280,6 @@ class OptionChannelGrayscale(Config):
 
 
 class HistogramChannel(Config):
-    """
-    Histogram karşılaştırması için kullanılacak renk kanalı.
-    RGB renk bilgisini, Grayscale yalnızca parlaklığı dikkate alır.
-    """
     name: Literal["HistogramChannel"] = "HistogramChannel"
     value: Union[OptionChannelRGB, OptionChannelGrayscale]
     type: Literal["object"] = "object"
@@ -348,13 +302,7 @@ class Histogram(Config):
         title = "Histogram"
 
 
-# --- FeatureBased seçeneğinin sub-config'leri ---
-
 class FeatureMaxKeypoints(Config):
-    """
-    Özellik noktası eşleştirmesinde kullanılacak maksimum anahtar nokta sayısı.
-    Daha fazla nokta daha doğru sonuç verir ancak işlem süresini artırır.
-    """
     name: Literal["FeatureMaxKeypoints"] = "FeatureMaxKeypoints"
     value: int = Field(default=500)
     type: Literal["number"] = "number"
@@ -387,10 +335,6 @@ class OptionDetectorSIFT(Config):
 
 
 class FeatureDetector(Config):
-    """
-    Özellik noktası çıkarma algoritması.
-    ORB hızlı ve hafiftir; SIFT daha doğru ancak daha yavaştır.
-    """
     name: Literal["FeatureDetector"] = "FeatureDetector"
     value: Union[OptionDetectorORB, OptionDetectorSIFT]
     type: Literal["object"] = "object"
@@ -413,13 +357,7 @@ class FeatureBased(Config):
         title = "Feature Based"
 
 
-# --- Compare dependentDropdown ---
-
 class ConfigCompareMethod(Config):
-    """
-    İki görüntüyü karşılaştırmak için kullanılacak yöntemi seçin.
-    Histogram piksel dağılımını, FeatureBased anahtar noktaları karşılaştırır.
-    """
     name: Literal["ConfigCompareMethod"] = "ConfigCompareMethod"
     value: Union[Histogram, FeatureBased]
     type: Literal["object"] = "object"
@@ -429,8 +367,6 @@ class ConfigCompareMethod(Config):
         title = "Compare Method"
         json_schema_extra = {"shortDescription": "Method"}
 
-
-# --- Compare Executor tanımı ---
 
 class CompareInputs(Inputs):
     inputImageOne: InputImageOne
@@ -459,7 +395,6 @@ class CompareResponse(Response):
 
 
 class Compare(Config):
-    """İki görüntüyü karşılaştırır; benzerlik skoru ve sonuç etiketi döndürür."""
     name: Literal["Compare"] = "Compare"
     value: Union[CompareRequest, CompareResponse]
     type: Literal["object"] = "object"
@@ -471,14 +406,10 @@ class Compare(Config):
 
 
 # ===========================================================================
-# PACKAGE MODEL
+# PACKAGE MODEL (BURADAKI 'component' TÜRÜ KRİTİKTİ)
 # ===========================================================================
 
 class ConfigExecutor(Config):
-    """
-    Çalıştırılacak işlem türünü seçin.
-    Filter tek görüntüye filtre uygular, Compare iki görüntüyü karşılaştırır.
-    """
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
     value: Union[Filter, Compare]
     type: Literal["executor"] = "executor"
@@ -496,4 +427,4 @@ class PackageConfigs(Configs):
 class PackageModel(Package):
     name: Literal["ImageProcessor"] = "ImageProcessor"
     configs: PackageConfigs
-    type: Literal["capsule"] = "capsule"
+    type: Literal["component"] = "component"
