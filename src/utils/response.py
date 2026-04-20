@@ -2,9 +2,9 @@ from sdks.novavision.src.helper.package import PackageHelper
 from components.ImageProcessor.src.models.PackageModel import (
     PackageModel, PackageConfigs, ConfigExecutor,
     # Filter
-    Filter, FilterRequest, FilterResponse, FilterOutputs, OutputImage,
+    Filter, FilterResponse, FilterOutputs, OutputImage,
     # Compare
-    Compare, CompareRequest, CompareResponse, CompareOutputs,
+    Compare, CompareResponse, CompareOutputs,
     OutputScore, OutputLabel,
 )
 
@@ -37,4 +37,4 @@ def build_compare_response(context):
         packageModel=PackageModel,
         packageConfigs=package_configs
     )
-    return package.build_model(context)s
+    return package.build_model(context)

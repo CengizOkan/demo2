@@ -1,14 +1,14 @@
 import setuptools
 
 setuptools.setup(
-    name="package",
+    name="ImageProcessor",
     version="0.0.1",
     author="DigiNova",
     author_email='info@diginova.com.tr',
-    description="Package",
-    url='https://github.com/novavision-ai/package',
+    description="Image Filter and Compare Package",
+    url='https://github.com/CengizOkan/demo2',
     license='MIT',
-    install_requires=['sdk', 'opencv-python-headless'],
+    install_requires=['sdk', 'opencv-python-headless', 'numpy'],
 
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -17,15 +17,11 @@ setuptools.setup(
     ],
 
     packages=[
-        'novavision.package',
-        'novavision.package.classes',
-        'novavision.package.configs',
-        'novavision.package.dataloaders',
-        'novavision.package.executors',
-        'novavision.package.models',
-        'novavision.package.utils',
-        'novavision.package.weights'
+        'novavision.ImageProcessor',
+        'novavision.ImageProcessor.executors',
+        'novavision.ImageProcessor.models',
+        'novavision.ImageProcessor.utils',
     ],
-    package_dir={'novavision.package': 'src'},
+    package_dir={'novavision.ImageProcessor': 'src'},
     python_requires=">=3.6"
 )
