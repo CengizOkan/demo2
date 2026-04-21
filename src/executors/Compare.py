@@ -5,90 +5,56 @@ from sdks.novavision.src.media.image import Image
 from sdks.novavision.src.base.component import Component
 from sdks.novavision.src.helper.executor import Executor
 from components.DemoPackage.src.models.PackageModel import PackageModel
-from components.DemoPackage.src.utils.response import build_compare_response
+from components.DemoPackage.src.utils.response import build_filter_response
 
 
-class Compare(Component):
-    SIMILARITY_THRESHOLD = 0.6
-
+class Filter(Component):
     def __init__(self, request, bootstrap):
         super().__init__(request, bootstrap)
         self.request.model = PackageModel(**(self.request.data))
 
-        self.input_image_one = self.request.get_param("inputImageOne")
-        self.input_image_two = self.request.get_param("inputImageTwo")
-        self.compare_method = self.request.get_param("ConfigCompareMethod")
+        self.input_image = self.request.get_param("inputImageOne")
+        self.filter_type = self.request.get_param("ConfigFilterType")
 
     @staticmethod
     def bootstrap(config: dict) -> dict:
         return {}
 
-    def compare_histogram(self, img1: np.ndarray, img2: np.ndarray) -> float:
-        bins = int(self.request.get_param("HistogramBins") or 256)
-        channel = self.request.get_param("HistogramChannel") or "RGB"
+    def apply_blur(self, img: np.ndarray) -> np.ndarray:
+        radius = self.request.get_param("BlurRadius") or 5
+        ksize = int(radius) if int(radius) % 2 == 1 else int(radius) + 1
+        return cv2.GaussianBlur(img, (ksize, ksize), 0)
 
-        if channel == "Grayscale":
-            g1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-            g2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-            h1 = cv2.calcHist([g1], [0], None, [bins], [0, 256])
-            h2 = cv2.calcHist([g2], [0], None, [bins], [0, 256])
-            cv2.normalize(h1, h1)
-            cv2.normalize(h2, h2)
-            score = cv2.compareHist(h1, h2, cv2.HISTCMP_CORREL)
-        else:
-            scores = []
-            for ch in range(3):
-                h1 = cv2.calcHist([img1], [ch], None, [bins], [0, 256])
-                h2 = cv2.calcHist([img2], [ch], None, [bins], [0, 256])
-                cv2.normalize(h1, h1)
-                cv2.normalize(h2, h2)
-                scores.append(cv2.compareHist(h1, h2, cv2.HISTCMP_CORREL))
-            score = float(np.mean(scores))
+    def apply_sharpen(self, img: np.ndarray) -> np.ndarray:
+        intensity = self.request.get_param("SharpenIntensity") or 1.0
+        kernel = np.array([
+            [0, -1, 0],
+            [-1, 5, -1],
+            [0, -1, 0]
+        ], dtype=np.float32)
+        center = (kernel.shape[0] // 2, kernel.shape[1] // 2)
+        kernel[center] = kernel[center] * float(intensity)
 
-        return max(0.0, min(1.0, (score + 1.0) / 2.0))
-
-    def compare_features(self, img1: np.ndarray, img2: np.ndarray) -> float:
-        max_kp = int(self.request.get_param("FeatureMaxKeypoints") or 500)
-        detector_type = self.request.get_param("FeatureDetector") or "ORB"
-
-        if detector_type == "SIFT":
-            detector = cv2.SIFT_create(nfeatures=max_kp)
-            norm = cv2.NORM_L2
-        else:
-            detector = cv2.ORB_create(nfeatures=max_kp)
-            norm = cv2.NORM_HAMMING
-
-        kp1, des1 = detector.detectAndCompute(img1, None)
-        kp2, des2 = detector.detectAndCompute(img2, None)
-
-        if des1 is None or des2 is None or len(kp1) == 0 or len(kp2) == 0:
-            return 0.0
-
-        matcher = cv2.BFMatcher(norm, crossCheck=True)
-        matches = matcher.match(des1, des2)
-
-        if len(matches) == 0:
-            return 0.0
-
-        good = [m for m in matches if m.distance < 50]
-        score = len(good) / max(len(kp1), len(kp2))
-        return max(0.0, min(1.0, score))
+        sharpened = cv2.filter2D(img, -1, kernel)
+        return np.clip(sharpened, 0, 255).astype(np.uint8)
 
     def run(self):
-        img1 = Image.get_frame(img=self.input_image_one, redis_db=self.redis_db)
-        img2 = Image.get_frame(img=self.input_image_two, redis_db=self.redis_db)
+        # 1. Görüntüyü numpy matrisi olarak al
+        img_matrix = Image.get_frame(img=self.input_image, redis_db=self.redis_db)
 
-        # Karşılaştırma fonksiyonlarına img nesnesinin matrisi (.value) gider
-        if self.compare_method == "Histogram":
-            score = self.compare_histogram(img1.value, img2.value)
+        if img_matrix is None:
+            return  # Eğer giriş resmi yoksa patlamaması için
+
+        # 2. Seçilen filtreyi uygula
+        if self.filter_type == "Blur":
+            processed_matrix = self.apply_blur(img_matrix)
         else:
-            score = self.compare_features(img1.value, img2.value)
+            processed_matrix = self.apply_sharpen(img_matrix)
 
-        self.output_score = float(round(score, 4))
-        self.output_label = "Similar" if score >= self.SIMILARITY_THRESHOLD else "Different"
+        # 3. ÇIKTI DÖNÜŞÜMÜ (KRİTİK NOKTA)
+        # İşlenmiş matrisi NovaVision'ın anladığı Image nesnesine paketliyoruz
+        output_img = Image()
+        output_img.set_frame(frame=processed_matrix, redis_db=self.redis_db)
 
-        return build_compare_response(context=self)
-
-
-if "__main__" == __name__:
-    Executor(sys.argv[1]).run()
+        # 4. response.py dosyasının beklediği değişkene ata
+        self.output_image = output_img
