@@ -50,16 +50,25 @@ class Filter(Component):
         return np.clip(result, 0, 255).astype(np.uint8)
 
     def run(self):
+        print("DEBUG: 1 - Filter calismaya basladi!", flush=True)
+
         img_matrix = Image.get_frame(img=self.input_image, redis_db=self.redis_db)
 
         if img_matrix is None:
+            print("DEBUG: HATA! Resim bulunamadi veya Redis'ten okunamadi (img_matrix None).", flush=True)
             return
+
+        print(f"DEBUG: 2 - Resim basariyla alindi. Boyutu: {img_matrix.shape}", flush=True)
 
         if self.filter_type == "Blur":
             processed_matrix = self.apply_blur(img_matrix)
         else:
             processed_matrix = self.apply_sharpen(img_matrix)
 
+        print("DEBUG: 3 - Filtre uygulandi. Redis'e geri yaziliyor...", flush=True)
+
         output_img = Image()
         output_img.set_frame(frame=processed_matrix, redis_db=self.redis_db)
         self.output_image = output_img
+
+        print("DEBUG: 4 - Islem TAMAM! Cikti basariyla hazirlandi.", flush=True)
