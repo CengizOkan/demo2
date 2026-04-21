@@ -13,7 +13,7 @@ class InputImageTwo(Input):
     value: Image
     type: Literal["object"] = "object"
 
-# Kural: Baş harfler büyük
+# Kural: Baş harfler büyük (PascalCase) [cite: 508]
 class OutputImage(Output):
     name: Literal["OutputImage"] = "OutputImage"
     value: Image
@@ -35,11 +35,11 @@ class KernelSize(Config):
     value: int = 15
     type: Literal["number"] = "number" # Tip 1: Number
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Güç"
+    class Config: title = "Filtre Gücü"
 
 class ProcessNote(Config):
     name: Literal["ProcessNote"] = "ProcessNote"
-    value: str = "Standart"
+    value: str = "Demo İşlemi"
     type: Literal["string"] = "string" # Tip 2: String
     field: Literal["textInput"] = "textInput"
     class Config: title = "Not"
@@ -68,32 +68,40 @@ class ConfigFilterType(Config):
     value: Union[OptionBlur, OptionSharpen]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Mod Seçin"
+    class Config: title = "Uygulama Modu"
 
 # --- 4. EXECUTOR REQUEST / RESPONSE ---
-# Filter (1 In / 1 Out)
+# First Executor (1 In / 1 Out)
 class FilterInputs(Inputs):
     inputImageOne: InputImageOne
+
 class FilterOutputs(Outputs):
-    OutputImage: OutputImage
+    OutputImage: OutputImage # PascalCase zorunlu [cite: 646]
+
 class FilterRequest(Request):
     inputs: Optional[FilterInputs]
     configs: ConfigFilterType
-    class Config: schema_extra = {"target": "configs"}
+    class Config:
+        schema_extra = {"target": "configs"} # schema_extra kullanımı
+
 class FilterResponse(Response):
     outputs: FilterOutputs
 
-# Compare (2 In / 2 Out)
+# Second Executor (2 In / 2 Out)
 class CompareInputs(Inputs):
     inputImageOne: InputImageOne
     inputImageTwo: InputImageTwo
+
 class CompareOutputs(Outputs):
     OutputScore: OutputScore
     OutputLabel: OutputLabel
+
 class CompareRequest(Request):
     inputs: Optional[CompareInputs]
     configs: ConfigFilterType
-    class Config: schema_extra = {"target": "configs"}
+    class Config:
+        schema_extra = {"target": "configs"}
+
 class CompareResponse(Response):
     outputs: CompareOutputs
 
@@ -104,7 +112,7 @@ class Filter(Config):
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
     class Config:
-        title = "Filtreleme"
+        title = "Filtreleme Görevi"
         schema_extra = {"target": {"value": 0}}
 
 class Compare(Config):
@@ -113,7 +121,7 @@ class Compare(Config):
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
     class Config:
-        title = "Kıyaslama"
+        title = "Kıyaslama Görevi"
         schema_extra = {"target": {"value": 0}}
 
 class ConfigExecutor(Config):
@@ -121,7 +129,8 @@ class ConfigExecutor(Config):
     value: Union[Filter, Compare] # En az 2 Executor
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Görev Seçin"
+    class Config:
+        title = "İşlem Seçin"
 
 class PackageConfigs(Configs):
     executor: ConfigExecutor
@@ -130,4 +139,4 @@ class PackageModel(Package):
     configs: PackageConfigs
     type: Literal["component"] = "component"
     name: Literal["DemoPackage"] = "DemoPackage"
-    uID = "1331112"
+    uID = "1331112" # uID ataması
