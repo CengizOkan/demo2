@@ -3,7 +3,7 @@ import os
 import cv2
 import numpy as np
 
-# Dinamik path ekleme işlemini importlardan sonraya çektik
+# Path ekleme line importlardan sonraya alındı
 sys.path.append(os.getcwd())
 
 from sdks.novavision.src.media.image import Image
@@ -18,10 +18,8 @@ class Filter(Component):
         super().__init__(request, bootstrap)
         self.request.model = PackageModel(**(self.request.data))
 
-        # Parametre erişimi (SDK get_param kullanımı önerilir)
         self.input_image_raw = self.request.get_param("inputImageOne")
-
-        # Dependent dropdown altındaki nested verilere erişim
+        # DependentDropdown altındaki veriye erişim yolu
         conf = self.request.model.configs.executor.value.configs.ConfigFilterType.value
         self.filter_type = conf.value
         self.strength = conf.kernelSize.value

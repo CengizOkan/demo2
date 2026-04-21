@@ -7,8 +7,7 @@ from components.DemoPackage.src.models.PackageModel import (
 
 def build_filter_response(context):
     output_img = OutputImage(value=context.output_image)
-    # Şartname: Attribute ismi büyük harfle başlamalı[cite: 1].
-    outputs = FilterOutputs(OutputImage=output_img)
+    outputs = FilterOutputs(OutputImage=output_img) # PascalCase attribute
     response = FilterResponse(outputs=outputs)
     executor = Filter(value=response)
     config_exec = ConfigExecutor(value=executor)
@@ -19,7 +18,6 @@ def build_filter_response(context):
 def build_compare_response(context):
     score = OutputScore(value=context.output_score)
     label = OutputLabel(value=context.output_label)
-    # CompareOutputs içindeki OutputScore ve OutputLabel attribute'ları
     outputs = CompareOutputs(OutputScore=score, OutputLabel=label)
     response = CompareResponse(outputs=outputs)
     executor = Compare(value=response)
