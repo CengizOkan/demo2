@@ -1,11 +1,3 @@
-"""
-Tek bir görüntüye Blur veya Sharpen filtresi uygular.
-Kullanıcı konfigürasyonuna göre seçilen filtre işlenir ve çıktı olarak döndürülür.
-"""
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
-
 import cv2
 import numpy as np
 

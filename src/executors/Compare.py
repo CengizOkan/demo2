@@ -1,11 +1,3 @@
-"""
-İki görüntüyü karşılaştırarak benzerlik skoru ve etiket döndürür.
-Histogram veya FeatureBased yöntemi kullanılabilir.
-"""
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
-
 import cv2
 import numpy as np
 
