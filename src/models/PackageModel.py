@@ -1,22 +1,17 @@
 from pydantic import Field
 from typing import List, Optional, Union, Literal
-from sdks.novavision.src.base.model import (
-    Package, Image, Inputs, Configs, Outputs, Response,
-    Request, Output, Input, Config, Param, Executor
-)
+from sdks.novavision.src.base.model import Package, Image, Inputs, Configs, Outputs, Response, Request, Output, Input, Config, Param, Executor
 
-# --- 1. SEVİYE: GİRDİ VE ÇIKTI MODELLERİ ---
+# --- 1. INPUTS & OUTPUTS ---
 class InputImageOne(Input):
     name: Literal["inputImageOne"] = "inputImageOne"
     value: Image
     type: Literal["object"] = "object"
-    class Config: title = "Birinci Resim"
 
 class InputImageTwo(Input):
     name: Literal["inputImageTwo"] = "inputImageTwo"
     value: Image
     type: Literal["object"] = "object"
-    class Config: title = "İkinci Resim"
 
 class OutputImage(Output):
     name: Literal["outputImage"] = "outputImage"
@@ -33,27 +28,26 @@ class OutputLabel(Output):
     value: str
     type: Literal["string"] = "string"
 
-# --- 2. SEVİYE: DEPENDENT DROPDOWN İÇİN PARAMETRELER (2 Farklı Tip) ---
+# --- 2. DEPENDENT DROPDOWN (Checklist: 2 Farklı Tip Alan) ---
 class BlurStrength(Config):
     name: Literal["BlurStrength"] = "BlurStrength"
-    value: int = Field(default=15, ge=1, le=51)
-    type: Literal["number"] = "number" # Tip 1: Number
+    value: int = 15
+    type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Bulanıklık Gücü"
+    class Config: title = "Güç"
 
 class FilterNote(Config):
     name: Literal["FilterNote"] = "FilterNote"
-    value: str = "Standart İşlem"
-    type: Literal["string"] = "string" # Tip 2: String
+    value: str = "Demo"
+    type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
-    class Config: title = "İşlem Notu"
+    class Config: title = "Not"
 
-# --- 3. SEVİYE: DEPENDENT DROPDOWN SEÇENEKLERİ ---
 class OptionBlur(Config):
     name: Literal["Blur"] = "Blur"
     value: Literal["Blur"] = "Blur"
-    blurStrength: BlurStrength # Bağlı alan 1
-    filterNote: FilterNote   # Bağlı alan 2
+    blurStrength: BlurStrength
+    filterNote: FilterNote
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
     class Config: title = "Gaussian Blur"
@@ -61,8 +55,8 @@ class OptionBlur(Config):
 class OptionSharpen(Config):
     name: Literal["Sharpen"] = "Sharpen"
     value: Literal["Sharpen"] = "Sharpen"
-    blurStrength: BlurStrength # Bağlı alan 1
-    filterNote: FilterNote   # Bağlı alan 2
+    blurStrength: BlurStrength
+    filterNote: FilterNote
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
     class Config: title = "Keskinleştirme"
@@ -72,11 +66,9 @@ class ConfigFilterType(Config):
     value: Union[OptionBlur, OptionSharpen]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Uygulama Modu"
+    class Config: title = "Mod Seçin"
 
-# --- 4. SEVİYE: EXECUTOR REQUEST / RESPONSE YAPILARI ---
-
-# Filter Executor (1 Input, 1 Output)
+# --- 3. EXECUTOR REQUEST / RESPONSE ---
 class FilterInputs(Inputs):
     inputImageOne: InputImageOne
 class FilterOutputs(Outputs):
@@ -88,7 +80,6 @@ class FilterRequest(Request):
 class FilterResponse(Response):
     outputs: FilterOutputs
 
-# Compare Executor (2 Inputs, 2 Outputs)
 class CompareInputs(Inputs):
     inputImageOne: InputImageOne
     inputImageTwo: InputImageTwo
@@ -102,14 +93,14 @@ class CompareRequest(Request):
 class CompareResponse(Response):
     outputs: CompareOutputs
 
-# --- 5. SEVİYE: EXECUTOR VE ÜST YAPILARI ---
+# --- 4. EXECUTORS ---
 class Filter(Config):
     name: Literal["Filter"] = "Filter"
     value: Union[FilterRequest, FilterResponse]
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
     class Config:
-        title = "Filtreleyici"
+        title = "Filtre"
         json_schema_extra = {"target": {"value": 0}}
 
 class Compare(Config):
@@ -118,15 +109,16 @@ class Compare(Config):
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
     class Config:
-        title = "Karşılaştırıcı"
+        title = "Kıyasla"
         json_schema_extra = {"target": {"value": 0}}
 
+# --- 5. ANA YAPI ---
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
-    value: Union[Filter, Compare] # Trello: At least 2 Executors
+    value: Union[Filter, Compare]
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Görev Seçimi"
+    class Config: title = "Görev Seçin"
 
 class PackageConfigs(Configs):
     executor: ConfigExecutor

@@ -5,18 +5,15 @@ from components.DemoPackage.src.models.PackageModel import (
     Compare, CompareResponse, CompareOutputs, OutputScore, OutputLabel
 )
 
-
 def build_filter_response(context):
     output_img = OutputImage(value=context.output_image)
     outputs = FilterOutputs(outputImage=output_img)
     response = FilterResponse(outputs=outputs)
     executor = Filter(value=response)
-
     config_exec = ConfigExecutor(value=executor)
     pkg_configs = PackageConfigs(executor=config_exec)
     package = PackageHelper(packageModel=PackageModel, packageConfigs=pkg_configs)
     return package.build_model(context)
-
 
 def build_compare_response(context):
     out_score = OutputScore(value=context.output_score)
@@ -24,7 +21,6 @@ def build_compare_response(context):
     outputs = CompareOutputs(outputScore=out_score, outputLabel=out_label)
     response = CompareResponse(outputs=outputs)
     executor = Compare(value=response)
-
     config_exec = ConfigExecutor(value=executor)
     pkg_configs = PackageConfigs(executor=config_exec)
     package = PackageHelper(packageModel=PackageModel, packageConfigs=pkg_configs)

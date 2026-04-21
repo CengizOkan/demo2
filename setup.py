@@ -1,10 +1,10 @@
-import setuptools
+from setuptools import setup, find_packages
 
-setuptools.setup(
+setup(
     name="DemoPackage",
     version="1.0.0",
     author="Cengiz Okan",
-    packages=setuptools.find_packages(),
+    packages=find_packages(),
     install_requires=[
         'numpy',
         'pydantic',
