@@ -1,14 +1,21 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name="DemoPackage",
     version="1.0.0",
     author="Cengiz Okan",
-    packages=find_packages(),
+    packages=[
+        "components",
+        "components.DemoPackage",
+        "components.DemoPackage.src",
+        "components.DemoPackage.src.models",
+        "components.DemoPackage.src.executors",
+        "components.DemoPackage.src.utils"
+    ],
     install_requires=[
-        'numpy',
-        'pydantic',
-        'opencv-python-headless'
+        "numpy",
+        "pydantic",
+        "opencv-python-headless"
     ],
     python_requires=">=3.8"
 )
