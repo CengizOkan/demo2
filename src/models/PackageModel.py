@@ -28,7 +28,7 @@ class OutputLabel(Output):
     value: str
     type: Literal["string"] = "string"
 
-# --- 2. DEPENDENT DROPDOWN (Checklist: 2 Farklı Tip Alan) ---
+# --- 2. DEPENDENT DROPDOWN ---
 class BlurStrength(Config):
     name: Literal["BlurStrength"] = "BlurStrength"
     value: int = 15
@@ -68,30 +68,38 @@ class ConfigFilterType(Config):
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
     class Config: title = "Mod Seçin"
 
-# --- 3. EXECUTOR REQUEST / RESPONSE ---
+# --- 3. EXECUTOR REQUEST / RESPONSE (Liste Yapısı Şart) ---
 class FilterInputs(Inputs):
     inputImageOne: InputImageOne
+
 class FilterOutputs(Outputs):
     outputImage: OutputImage
+
 class FilterRequest(Request):
-    inputs: Optional[FilterInputs]
-    configs: ConfigFilterType
-    class Config: schema_extra = {"target": "configs"}
+    inputs: Optional[List[FilterInputs]] # List eklendi
+    configs: List[ConfigFilterType]       # List eklendi
+    class Config:
+        schema_extra = {"target": "configs"}
+
 class FilterResponse(Response):
-    outputs: FilterOutputs
+    outputs: List[FilterOutputs]         # List eklendi
 
 class CompareInputs(Inputs):
     inputImageOne: InputImageOne
     inputImageTwo: InputImageTwo
+
 class CompareOutputs(Outputs):
     outputScore: OutputScore
     outputLabel: OutputLabel
+
 class CompareRequest(Request):
-    inputs: Optional[CompareInputs]
-    configs: ConfigFilterType
-    class Config: schema_extra = {"target": "configs"}
+    inputs: Optional[List[CompareInputs]] # List eklendi
+    configs: List[ConfigFilterType]        # List eklendi
+    class Config:
+        schema_extra = {"target": "configs"}
+
 class CompareResponse(Response):
-    outputs: CompareOutputs
+    outputs: List[CompareOutputs]          # List eklendi
 
 # --- 4. EXECUTORS ---
 class Filter(Config):
