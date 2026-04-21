@@ -2,19 +2,9 @@ import setuptools
 
 setuptools.setup(
     name="DemoPackage",
-    version="0.0.1",
+    version="0.0.2",  # <-- BURAYI 0.0.2 YAPTIK
     author="DigiNova",
-    author_email='info@diginova.com.tr',
-    description="Image Filter and Compare Package",
-    url='https://github.com/CengizOkan/demo2',
-    license='MIT',
-    install_requires=['opencv-python-headless', 'numpy'],
-    packages=[
-        'novavision.DemoPackage',
-        'novavision.DemoPackage.executors',
-        'novavision.DemoPackage.models',
-        'novavision.DemoPackage.utils',
-    ],
-    package_dir={'novavision.DemoPackage': 'src'},
+    description="Demo Package",
+    packages=setuptools.find_packages(),
     python_requires=">=3.6"
 )
