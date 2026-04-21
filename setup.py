@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="DemoPackage",
-    version="0.0.1",
+    version="0.0.3",
     author="DigiNova",
     author_email='info@diginova.com.tr',
     description="Image Filter and Compare Package",
@@ -10,11 +10,11 @@ setuptools.setup(
     license='MIT',
     install_requires=['opencv-python-headless', 'numpy'],
     packages=[
-        'novavision.DemoPackage',
-        'novavision.DemoPackage.executors',
-        'novavision.DemoPackage.models',
-        'novavision.DemoPackage.utils',
+        'components.DemoPackage.src',
+        'components.DemoPackage.src.executors',
+        'components.DemoPackage.src.models',
+        'components.DemoPackage.src.utils',
     ],
-    package_dir={'novavision.DemoPackage': 'src'},
+    package_dir={'components.DemoPackage.src': 'src'},
     python_requires=">=3.6"
 )
