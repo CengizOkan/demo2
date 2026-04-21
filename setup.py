@@ -2,13 +2,13 @@ import setuptools
 
 setuptools.setup(
     name="DemoPackage",
-    version="0.0.7",
+    version="0.0.8", # Versiyonu yeniledik
     author="DigiNova",
     author_email='info@diginova.com.tr',
-    description="Test Package",
+    description="Image Filter and Compare Package (Pure Numpy)",
     url='https://github.com/CengizOkan/demo2',
     license='MIT',
-    install_requires=[], # TAMAMEN BOŞ
+    install_requires=['numpy'], # SADECE NUMPY
     packages=[
         'components.DemoPackage.src',
         'components.DemoPackage.src.executors',
