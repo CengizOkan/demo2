@@ -1,49 +1,37 @@
+import os
+import sys
 import numpy as np
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
 
 from sdks.novavision.src.media.image import Image
 from sdks.novavision.src.base.component import Component
+from sdks.novavision.src.helper.executor import Executor
 from components.DemoPackage.src.models.PackageModel import PackageModel
 from components.DemoPackage.src.utils.response import build_compare_response
 
-
 class Compare(Component):
-    SIMILARITY_THRESHOLD = 0.6
-
     def __init__(self, request, bootstrap):
         super().__init__(request, bootstrap)
         self.request.model = PackageModel(**(self.request.data))
 
-        self.input_image_one = self.request.get_param("inputImageOne")
-        self.input_image_two = self.request.get_param("inputImageTwo")
-        self.compare_method = self.request.get_param("ConfigCompareMethod")
-
-    @staticmethod
-    def bootstrap(config: dict) -> dict:
-        return {}
-
-    def compare_mse(self, img1: np.ndarray, img2: np.ndarray) -> float:
-        # OpenCV boyutlandırma yerine, kırparak MSE (Hata Kareleri Ortalaması) hesaplama
-        h = min(img1.shape[0], img2.shape[0])
-        w = min(img1.shape[1], img2.shape[1])
-
-        c1 = img1[:h, :w].astype(np.float32)
-        c2 = img2[:h, :w].astype(np.float32)
-
-        mse = np.mean((c1 - c2) ** 2)
-        # Maksimum MSE 65025'tir. Bunu 0-1 arası benzerlik skoruna çeviriyoruz.
-        score = 1.0 - (mse / 65025.0)
-        return float(max(0.0, min(1.0, score)))
+        self.img_one_raw = self.request.get_param("inputImageOne")
+        self.img_two_raw = self.request.get_param("inputImageTwo")
 
     def run(self):
-        img1_matrix = Image.get_frame(img=self.input_image_one, redis_db=self.redis_db)
-        img2_matrix = Image.get_frame(img=self.input_image_two, redis_db=self.redis_db)
+        img1 = Image.get_frame(img=self.img_one_raw, redis_db=self.redis_db)
+        img2 = Image.get_frame(img=self.img_two_raw, redis_db=self.redis_db)
 
-        if img1_matrix is None or img2_matrix is None:
+        if img1 is None or img2 is None:
             self.output_score = 0.0
-            self.output_label = "Hata"
-            return
+            self.output_label = "Eksik Veri"
+        else:
+            # Basit bir piksel karşılaştırma mantığı
+            score = float(np.mean(img1 == img2))
+            self.output_score = score
+            self.output_label = "Benzer" if score > 0.7 else "Farklı"
 
-        skor = self.compare_mse(img1_matrix, img2_matrix)
+        return build_compare_response(context=self)
 
-        self.output_score = float(skor)
-        self.output_label = "Benzer" if skor >= self.SIMILARITY_THRESHOLD else "Farklı"
+if "__main__" == __name__:
+    Executor(sys.argv[1]).run()

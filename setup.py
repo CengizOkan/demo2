@@ -2,16 +2,9 @@ import setuptools
 
 setuptools.setup(
     name="DemoPackage",
-    version="0.1.0",
+    version="1.0.0",
     author="Cengiz Okan",
-    packages=[
-        "components",
-        "components.DemoPackage",
-        "components.DemoPackage.src",
-        "components.DemoPackage.src.models",
-        "components.DemoPackage.src.executors",
-        "components.DemoPackage.src.utils"
-    ],
+    packages=setuptools.find_packages(),
     install_requires=[
         'numpy',
         'pydantic',
