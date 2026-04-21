@@ -8,7 +8,7 @@ setuptools.setup(
     description="Image Filter and Compare Package",
     url='https://github.com/CengizOkan/demo2',
     license='MIT',
-    install_requires=['opencv-python-headless', 'numpy'],
+    install_requires=[],
     packages=[
         'components.DemoPackage.src',
         'components.DemoPackage.src.executors',
