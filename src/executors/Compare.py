@@ -4,8 +4,8 @@ import numpy as np
 from sdks.novavision.src.media.image import Image
 from sdks.novavision.src.base.component import Component
 from sdks.novavision.src.helper.executor import Executor
-from components.DemoPackage.src.models.PackageModel import PackageModel
-from components.DemoPackage.src.utils.response import build_compare_response
+from novavision.DemoPackage.models.PackageModel import PackageModel
+from novavision.DemoPackage.utils.response import build_compare_response
 
 
 class Compare(Component):

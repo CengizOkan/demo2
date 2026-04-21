@@ -1,5 +1,5 @@
 from sdks.novavision.src.helper.package import PackageHelper
-from components.DemoPackage.src.models.PackageModel import (
+from novavision.DemoPackage.models.PackageModel import (
     PackageModel, PackageConfigs, ConfigExecutor,
     # Filter
     Filter, FilterResponse, FilterOutputs, OutputImage,
