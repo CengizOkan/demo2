@@ -5,7 +5,7 @@ from sdks.novavision.src.base.model import (
     Request, Output, Input, Config, Param, Executor
 )
 
-# --- INPUT & OUTPUT MODELLERİ ---
+# --- 1. SEVİYE: YAPRAK DÜĞÜMLER (Inputs & Outputs) ---
 class InputImageOne(Input):
     name: Literal["inputImageOne"] = "inputImageOne"
     value: Image
@@ -18,7 +18,7 @@ class OutputImage(Output):
     type: Literal["object"] = "object"
     field: Literal["output"] = "output"
 
-# --- CONFIG SEÇENEKLERİ (OPTIONS) ---
+# --- 2. SEVİYE: CONFIG SEÇENEKLERİ (Options) ---
 class OptionBlur(Config):
     name: Literal["Blur"] = "Blur"
     value: Literal["Blur"] = "Blur"
@@ -33,7 +33,7 @@ class OptionSharpen(Config):
     field: Literal["option"] = "option"
     class Config: title = "Sharpen"
 
-# --- CONFIG PARAMETRELERİ ---
+# --- 3. SEVİYE: CONFIG PARAMETRELERİ ---
 class ConfigFilterType(Config):
     name: Literal["ConfigFilterType"] = "ConfigFilterType"
     value: Union[OptionBlur, OptionSharpen]
@@ -48,7 +48,7 @@ class BlurRadius(Config):
     field: Literal["input"] = "input"
     class Config: title = "Blur Radius"
 
-# --- REQUEST & RESPONSE ---
+# --- 4. SEVİYE: REQUEST & RESPONSE MODELLERİ ---
 class FilterRequest(Request):
     inputs: Optional[List[InputImageOne]]
     configs: List[Union[ConfigFilterType, BlurRadius]]
@@ -58,7 +58,7 @@ class FilterRequest(Request):
 class FilterResponse(Response):
     outputs: List[OutputImage]
 
-# --- EXECUTOR TANIMI ---
+# --- 5. SEVİYE: EXECUTOR VE ÜST YAPILAR ---
 class Filter(Executor):
     name: Literal["Filter"] = "Filter"
     value: Union[FilterRequest, FilterResponse]
@@ -66,7 +66,7 @@ class Filter(Executor):
     field: Literal["option"] = "option"
     class Config:
         title = "Filter Task"
-        schema_extra = {"target": {"value": 0}}
+        schema_extra = {"target": {"value": 0}} # Request'e yönlendirir
 
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
@@ -75,7 +75,6 @@ class ConfigExecutor(Config):
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
     class Config: title = "Task"
 
-# --- ANA PAKET MODELİ ---
 class PackageConfigs(Configs):
     executor: ConfigExecutor
 
