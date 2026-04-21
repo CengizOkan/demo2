@@ -7,7 +7,7 @@ from components.DemoPackage.src.models.PackageModel import (
 
 def build_filter_response(context):
     out_img = OutputImage(value=context.output_image)
-    outputs = FilterOutputs(OutputImage=out_img) # PascalCase attribute
+    outputs = FilterOutputs(OutputImage=out_img)
     response = FilterResponse(outputs=outputs)
     executor = Filter(value=response)
     config_exec = ConfigExecutor(value=executor)
