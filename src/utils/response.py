@@ -6,8 +6,9 @@ from components.DemoPackage.src.models.PackageModel import (
 )
 
 def build_filter_response(context):
-    out_img = OutputImage(value=context.output_image)
-    outputs = FilterOutputs(outputImage=out_img)
+    output_img = OutputImage(value=context.output_image)
+    # Modelde 'OutputImage' olarak güncelledik
+    outputs = FilterOutputs(OutputImage=output_img)
     response = FilterResponse(outputs=outputs)
     executor = Filter(value=response)
     config_exec = ConfigExecutor(value=executor)
@@ -18,7 +19,8 @@ def build_filter_response(context):
 def build_compare_response(context):
     out_score = OutputScore(value=context.output_score)
     out_label = OutputLabel(value=context.output_label)
-    outputs = CompareOutputs(outputScore=out_score, outputLabel=out_label)
+    # Modelde 'OutputScore' ve 'OutputLabel' olarak güncelledik
+    outputs = CompareOutputs(OutputScore=out_score, OutputLabel=out_label)
     response = CompareResponse(outputs=outputs)
     executor = Compare(value=response)
     config_exec = ConfigExecutor(value=executor)
