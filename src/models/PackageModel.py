@@ -1,8 +1,11 @@
 from pydantic import Field
 from typing import List, Optional, Union, Literal
-from sdks.novavision.src.base.model import Package, Image, Inputs, Configs, Outputs, Response, Request, Output, Input, Config, Param, Executor
+from sdks.novavision.src.base.model import (
+    Package, Image, Inputs, Configs, Outputs, Response,
+    Request, Output, Input, Config, Param, Executor
+)
 
-# --- 1. INPUTS & OUTPUTS ---
+# --- 1. SEVİYE: INPUTS & OUTPUTS ---
 class InputImageOne(Input):
     name: Literal["inputImageOne"] = "inputImageOne"
     value: Image
@@ -28,10 +31,10 @@ class OutputLabel(Output):
     value: str
     type: Literal["string"] = "string"
 
-# --- 2. DEPENDENT DROPDOWN ---
+# --- 2. SEVİYE: DEPENDENT DROPDOWN ALANLARI (Checklist: 2 Farklı Tip) ---
 class BlurStrength(Config):
     name: Literal["BlurStrength"] = "BlurStrength"
-    value: int = 15
+    value: int = Field(default=15, ge=1, le=51)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
     class Config: title = "Güç"
@@ -41,13 +44,14 @@ class FilterNote(Config):
     value: str = "Demo"
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Not"
+    class Config: title = "İşlem Notu"
 
+# --- 3. SEVİYE: DROPDOWN SEÇENEKLERİ ---
 class OptionBlur(Config):
     name: Literal["Blur"] = "Blur"
     value: Literal["Blur"] = "Blur"
-    blurStrength: BlurStrength
-    filterNote: FilterNote
+    blurStrength: BlurStrength # Tetiklenen 1. alan
+    filterNote: FilterNote   # Tetiklenen 2. alan
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
     class Config: title = "Gaussian Blur"
@@ -55,8 +59,8 @@ class OptionBlur(Config):
 class OptionSharpen(Config):
     name: Literal["Sharpen"] = "Sharpen"
     value: Literal["Sharpen"] = "Sharpen"
-    blurStrength: BlurStrength
-    filterNote: FilterNote
+    blurStrength: BlurStrength # Tetiklenen 1. alan
+    filterNote: FilterNote   # Tetiklenen 2. alan
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
     class Config: title = "Keskinleştirme"
@@ -66,9 +70,9 @@ class ConfigFilterType(Config):
     value: Union[OptionBlur, OptionSharpen]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Mod Seçin"
+    class Config: title = "Filtre Modu"
 
-# --- 3. EXECUTOR REQUEST / RESPONSE (Liste Yapısı Şart) ---
+# --- 4. SEVİYE: REQUEST / RESPONSE (Örnek Kod 27'deki gibi Liste Değil Tekil) ---
 class FilterInputs(Inputs):
     inputImageOne: InputImageOne
 
@@ -76,13 +80,12 @@ class FilterOutputs(Outputs):
     outputImage: OutputImage
 
 class FilterRequest(Request):
-    inputs: Optional[List[FilterInputs]] # List eklendi
-    configs: List[ConfigFilterType]       # List eklendi
-    class Config:
-        schema_extra = {"target": "configs"}
+    inputs: Optional[FilterInputs]
+    configs: ConfigFilterType
+    class Config: schema_extra = {"target": "configs"}
 
 class FilterResponse(Response):
-    outputs: List[FilterOutputs]         # List eklendi
+    outputs: FilterOutputs
 
 class CompareInputs(Inputs):
     inputImageOne: InputImageOne
@@ -93,15 +96,14 @@ class CompareOutputs(Outputs):
     outputLabel: OutputLabel
 
 class CompareRequest(Request):
-    inputs: Optional[List[CompareInputs]] # List eklendi
-    configs: List[ConfigFilterType]        # List eklendi
-    class Config:
-        schema_extra = {"target": "configs"}
+    inputs: Optional[CompareInputs]
+    configs: ConfigFilterType
+    class Config: schema_extra = {"target": "configs"}
 
 class CompareResponse(Response):
-    outputs: List[CompareOutputs]          # List eklendi
+    outputs: CompareOutputs
 
-# --- 4. EXECUTORS ---
+# --- 5. SEVİYE: EXECUTOR VE ÜST YAPI ---
 class Filter(Config):
     name: Literal["Filter"] = "Filter"
     value: Union[FilterRequest, FilterResponse]
@@ -120,13 +122,14 @@ class Compare(Config):
         title = "Kıyasla"
         json_schema_extra = {"target": {"value": 0}}
 
-# --- 5. ANA YAPI ---
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
     value: Union[Filter, Compare]
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Görev Seçin"
+    class Config:
+        title = "Görev Seçin"
+        json_schema_extra = {"target": "value"} # Tek executor referansı için şartnamede belirtilen target
 
 class PackageConfigs(Configs):
     executor: ConfigExecutor
