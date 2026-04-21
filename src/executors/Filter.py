@@ -1,7 +1,17 @@
+"""
+Tek bir görüntüye Blur veya Sharpen filtresi uygular.
+Kullanıcı konfigürasyonuna göre seçilen filtre işlenir ve çıktı olarak döndürülür.
+"""
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
+
+import cv2
 import numpy as np
 
 from sdks.novavision.src.media.image import Image
 from sdks.novavision.src.base.component import Component
+from sdks.novavision.src.helper.executor import Executor
 from components.DemoPackage.src.models.PackageModel import PackageModel
 from components.DemoPackage.src.utils.response import build_filter_response
 
@@ -19,56 +29,58 @@ class Filter(Component):
         return {}
 
     def apply_blur(self, img: np.ndarray) -> np.ndarray:
-        # OpenCV olmadan basit ve hızlı bir Box Blur işlemi (Matris kaydırma ile)
-        radius = int(self.request.get_param("BlurRadius") or 3)
-        result = img.copy().astype(np.float32)
+        radius = self.request.get_param("BlurRadius") or 5
+        mode = self.request.get_param("BlurMode") or "Gaussian"
 
-        for _ in range(radius):
-            padded = np.pad(result, ((1, 1), (1, 1), (0, 0)), mode='edge')
-            result = (padded[0:-2, 0:-2] + padded[0:-2, 1:-1] + padded[0:-2, 2:] +
-                      padded[1:-1, 0:-2] + padded[1:-1, 1:-1] + padded[1:-1, 2:] +
-                      padded[2:, 0:-2] + padded[2:, 1:-1] + padded[2:, 2:]) / 9.0
+        ksize = int(radius) if int(radius) % 2 == 1 else int(radius) + 1
+        ksize = max(1, ksize)
 
-        return result.astype(np.uint8)
+        if mode == "Gaussian":
+            return cv2.GaussianBlur(img, (ksize, ksize), 0)
+        else:
+            return cv2.medianBlur(img, ksize)
 
     def apply_sharpen(self, img: np.ndarray) -> np.ndarray:
-        # OpenCV olmadan saf Numpy ile keskinleştirme (Laplacian kernel)
         intensity = self.request.get_param("SharpenIntensity") or 1.0
-        padded = np.pad(img, ((1, 1), (1, 1), (0, 0)), mode='edge').astype(np.float32)
+        kernel_size = self.request.get_param("SharpenKernel") or "Small"
 
-        center = padded[1:-1, 1:-1] * 5.0
-        top = padded[0:-2, 1:-1]
-        bottom = padded[2:, 1:-1]
-        left = padded[1:-1, 0:-2]
-        right = padded[1:-1, 2:]
+        if kernel_size == "Small":
+            kernel = np.array([
+                [0, -1,  0],
+                [-1,  5, -1],
+                [0, -1,  0]
+            ], dtype=np.float32)
+        else:
+            kernel = np.array([
+                [ 0,  0, -1,  0,  0],
+                [ 0, -1, -2, -1,  0],
+                [-1, -2, 17, -2, -1],
+                [ 0, -1, -2, -1,  0],
+                [ 0,  0, -1,  0,  0]
+            ], dtype=np.float32)
 
-        sharpened = center - top - bottom - left - right
+        center = (kernel.shape[0] // 2, kernel.shape[1] // 2)
+        kernel[center] = kernel[center] * float(intensity)
 
-        # Yoğunluğa göre orijinal resimle harmanla
-        original = img.astype(np.float32)
-        result = original + (sharpened - original) * float(intensity)
-        return np.clip(result, 0, 255).astype(np.uint8)
+        sharpened = cv2.filter2D(img, -1, kernel)
+        return np.clip(sharpened, 0, 255).astype(np.uint8)
 
     def run(self):
-        print("DEBUG: 1 - Filter calismaya basladi!", flush=True)
-
-        img_matrix = Image.get_frame(img=self.input_image, redis_db=self.redis_db)
-
-        if img_matrix is None:
-            print("DEBUG: HATA! Resim bulunamadi veya Redis'ten okunamadi (img_matrix None).", flush=True)
-            return
-
-        print(f"DEBUG: 2 - Resim basariyla alindi. Boyutu: {img_matrix.shape}", flush=True)
+        img = Image.get_frame(img=self.input_image, redis_db=self.redis_db)
 
         if self.filter_type == "Blur":
-            processed_matrix = self.apply_blur(img_matrix)
+            result = self.apply_blur(img)
         else:
-            processed_matrix = self.apply_sharpen(img_matrix)
+            result = self.apply_sharpen(img)
 
-        print("DEBUG: 3 - Filtre uygulandi. Redis'e geri yaziliyor...", flush=True)
+        self.output_image = Image.set_frame(
+            img=result,
+            package_uID=self.uID,
+            redis_db=self.redis_db
+        )
 
-        output_img = Image()
-        output_img.set_frame(frame=processed_matrix, redis_db=self.redis_db)
-        self.output_image = output_img
+        return build_filter_response(context=self)
 
-        print("DEBUG: 4 - Islem TAMAM! Cikti basariyla hazirlandi.", flush=True)
+
+if "__main__" == __name__:
+    Executor(sys.argv[1]).run()
