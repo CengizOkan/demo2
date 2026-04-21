@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="DemoPackage",
-    version="0.0.2",  # <-- BURAYI 0.0.2 YAPTIK
+    version="0.0.2",
     author="DigiNova",
     description="Demo Package",
     packages=setuptools.find_packages(),
