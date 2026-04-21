@@ -2,9 +2,9 @@ from components.DemoPackage.src.models.PackageModel import FilterResponse, Outpu
 
 
 def build_filter_response(context):
-    # Eğer output_image oluşturulmuşsa Response modeline ekle
     outputs = []
-    if hasattr(context, 'output_image'):
+    # Eğer bir çıktı üretildiyse listeye ekle
+    if hasattr(context, 'output_image') and context.output_image:
         outputs.append(OutputImage(value=context.output_image))
 
     return FilterResponse(outputs=outputs)

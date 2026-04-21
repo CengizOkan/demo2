@@ -41,24 +41,17 @@ class ConfigFilterType(Config):
     field: Literal["dropdownlist"] = "dropdownlist"
     class Config: title = "Filter Type"
 
-class BlurRadius(Config):
-    name: Literal["BlurRadius"] = "BlurRadius"
-    value: int = 5
-    type: Literal["number"] = "number"
-    field: Literal["input"] = "input"
-    class Config: title = "Blur Radius"
-
-# --- 4. SEVİYE: REQUEST & RESPONSE MODELLERİ ---
+# --- 4. SEVİYE: REQUEST & RESPONSE ---
 class FilterRequest(Request):
     inputs: Optional[List[InputImageOne]]
-    configs: List[Union[ConfigFilterType, BlurRadius]]
+    configs: List[ConfigFilterType]
     class Config:
         schema_extra = {"target": "configs"}
 
 class FilterResponse(Response):
     outputs: List[OutputImage]
 
-# --- 5. SEVİYE: EXECUTOR VE ÜST YAPILAR ---
+# --- 5. SEVİYE: EXECUTOR VE ÜST YAPI ---
 class Filter(Executor):
     name: Literal["Filter"] = "Filter"
     value: Union[FilterRequest, FilterResponse]
