@@ -1,8 +1,8 @@
 from pydantic import Field
-from typing import List, Optional, Union, Literal
-from sdks.novavision.src.base.model import Package, Image, Inputs, Configs, Outputs, Response, Request, Output, Input, Config, Param, Executor
+from typing import Optional, Union, Literal
+from sdks.novavision.src.base.model import Package, Image, Inputs, Configs, Outputs, Response, Request, Output, Input, Config
 
-# --- 1. GİRDİ VE ÇIKTI MODELLERİ ---
+# --- 1. INPUTS ---
 class InputImageOne(Input):
     name: Literal["inputImageOne"] = "inputImageOne"
     value: Image
@@ -13,96 +13,88 @@ class InputImageTwo(Input):
     value: Image
     type: Literal["object"] = "object"
 
+# --- 2. OUTPUTS ---
 class OutputImage(Output):
-    name: Literal["OutputImage"] = "OutputImage" # Baş harf büyük
+    name: Literal["outputImage"] = "outputImage"
     value: Image
     type: Literal["object"] = "object"
 
 class OutputScore(Output):
-    name: Literal["OutputScore"] = "OutputScore" # Baş harf büyük
+    name: Literal["outputScore"] = "outputScore"
     value: float
     type: Literal["number"] = "number"
 
 class OutputLabel(Output):
-    name: Literal["OutputLabel"] = "OutputLabel" # Baş harf büyük
+    name: Literal["outputLabel"] = "outputLabel"
     value: str
     type: Literal["string"] = "string"
 
-# --- 2. BAĞLI ALANLAR (Trello: 2 Farklı Tip Alan Şartı)  ---
-class KernelSize(Config):
-    name: Literal["KernelSize"] = "KernelSize"
-    value: int = 15
-    type: Literal["number"] = "number" # Tip 1: Sayı
+# --- 3. BAĞLI ALANLAR (TRELLO: 2 FARKLI TİP ŞARTI) ---
+class ConfigNumber(Config):
+    name: Literal["ConfigNumber"] = "ConfigNumber"
+    value: int = 10
+    type: Literal["number"] = "number" # TİP 1: NUMBER
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Filtre Gücü"
+    class Config:
+        title = "Sayısal Değer"
 
-class ProcessNote(Config):
-    name: Literal["ProcessNote"] = "ProcessNote"
-    value: str = "Demo"
-    type: Literal["string"] = "string" # Tip 2: Yazı
+class ConfigString(Config):
+    name: Literal["ConfigString"] = "ConfigString"
+    value: str = "default"
+    type: Literal["string"] = "string" # TİP 2: STRING
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Not"
+    class Config:
+        title = "Metin Değeri"
 
-# --- 3. SEÇENEKLER VE DROPDOWN ---
-class OptionBlur(Config):
-    name: Literal["Blur"] = "Blur"
-    value: Literal["Blur"] = "Blur"
-    kernelSize: KernelSize # Bağlı alan 1
-    processNote: ProcessNote # Bağlı alan 2
+# --- 4. SEÇENEKLER ---
+class OptionFirst(Config):
+    name: Literal["optionFirst"] = "optionFirst"
+    value: Literal["optionFirst"] = "optionFirst"
+    configNumber: ConfigNumber
+    configString: ConfigString
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
-    class Config: title = "Gaussian Blur"
+    class Config:
+        title = "Birinci Seçenek"
 
-class OptionSharpen(Config):
-    name: Literal["Sharpen"] = "Sharpen"
-    value: Literal["Sharpen"] = "Sharpen"
-    kernelSize: KernelSize
-    processNote: ProcessNote
+class OptionSecond(Config):
+    name: Literal["optionSecond"] = "optionSecond"
+    value: Literal["optionSecond"] = "optionSecond"
+    configNumber: ConfigNumber
+    configString: ConfigString
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
-    class Config: title = "Keskinleştirme"
+    class Config:
+        title = "İkinci Seçenek"
 
-class ConfigFilterType(Config):
-    name: Literal["ConfigFilterType"] = "ConfigFilterType"
-    value: Union[OptionBlur, OptionSharpen]
+# --- 5. DEPENDENT DROPDOWN ---
+class ConfigDependent(Config):
+    name: Literal["ConfigDependent"] = "ConfigDependent"
+    value: Union[OptionFirst, OptionSecond]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Uygulama Modu"
+    class Config:
+        title = "Ayarlar"
 
-# --- 4. EXECUTOR REQUEST / RESPONSE ---
-# Filter (1 In / 1 Out)
+# --- 6. FIRST EXECUTOR (1 IN, 1 OUT) ---
 class FilterInputs(Inputs):
     inputImageOne: InputImageOne
 
 class FilterOutputs(Outputs):
-    OutputImage: OutputImage # PascalCase
+    outputImage: OutputImage
+
+class FilterConfigs(Configs):
+    configDependent: ConfigDependent
 
 class FilterRequest(Request):
     inputs: Optional[FilterInputs]
-    configs: ConfigFilterType
-    class Config: schema_extra = {"target": "configs"}
+    configs: FilterConfigs
+    class Config:
+        schema_extra = {"target": "configs"}
 
 class FilterResponse(Response):
     outputs: FilterOutputs
 
-# Compare (2 In / 2 Out)
-class CompareInputs(Inputs):
-    inputImageOne: InputImageOne
-    inputImageTwo: InputImageTwo
-
-class CompareOutputs(Outputs):
-    OutputScore: OutputScore
-    OutputLabel: OutputLabel
-
-class CompareRequest(Request):
-    inputs: Optional[CompareInputs]
-    configs: ConfigFilterType
-    class Config: schema_extra = {"target": "configs"}
-
-class CompareResponse(Response):
-    outputs: CompareOutputs
-
-# --- 5. ANA YAPI ---
 class Filter(Config):
     name: Literal["Filter"] = "Filter"
     value: Union[FilterRequest, FilterResponse]
@@ -111,6 +103,27 @@ class Filter(Config):
     class Config:
         title = "Filtreleme"
         schema_extra = {"target": {"value": 0}}
+
+# --- 7. SECOND EXECUTOR (2 IN, 2 OUT) ---
+class CompareInputs(Inputs):
+    inputImageOne: InputImageOne
+    inputImageTwo: InputImageTwo
+
+class CompareOutputs(Outputs):
+    outputScore: OutputScore
+    outputLabel: OutputLabel
+
+class CompareConfigs(Configs):
+    configDependent: ConfigDependent
+
+class CompareRequest(Request):
+    inputs: Optional[CompareInputs]
+    configs: CompareConfigs
+    class Config:
+        schema_extra = {"target": "configs"}
+
+class CompareResponse(Response):
+    outputs: CompareOutputs
 
 class Compare(Config):
     name: Literal["Compare"] = "Compare"
@@ -121,12 +134,14 @@ class Compare(Config):
         title = "Karşılaştırma"
         schema_extra = {"target": {"value": 0}}
 
+# --- 8. ANA YAPI ---
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
-    value: Union[Filter, Compare] # En az 2 Executor
+    value: Union[Filter, Compare] # 2 Executor eklendi
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Görev Seçin"
+    class Config:
+        title = "Görev Seçin"
 
 class PackageConfigs(Configs):
     executor: ConfigExecutor
