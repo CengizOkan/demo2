@@ -7,8 +7,7 @@ from sdks.novavision.src.base.model import (
 )
 
 
-# --- 1. GİRİŞ/ÇIKIŞ TANIMLARI ---
-# Inputlar camelCase olmak zorundadır.
+# --- 1. GİRİŞ/ÇIKIŞ TANIMLARI (Tamamen camelCase) ---
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
     value: Union[List[Image], Image]
@@ -34,9 +33,8 @@ class InputDetections(Input):
     class Config: title = "Giriş Tespitleri"
 
 
-# Outputlar ve name alanları büyük harfle başlamak zorundadır.
 class OutputImage(Output):
-    name: Literal["OutputImage"] = "OutputImage"
+    name: Literal["outputImage"] = "outputImage"
     value: Union[List[Image], Image]
     type: str = "object"
 
@@ -53,27 +51,27 @@ class OutputImage(Output):
 
 
 class OutputDetections(Output):
-    name: Literal["OutputDetections"] = "OutputDetections"
+    name: Literal["outputDetections"] = "outputDetections"
     value: Union[List[Detection], Detection]
     type: str = "object"
 
     class Config: title = "Çıkış Tespitleri"
 
 
-# --- 2. DEPENDENT DROPDOWN KONFİGÜRASYONU (Trello Şartı) ---
+# --- 2. TRELLO ŞARTI: DEPENDENT DROPDOWN ---
 
-# Option 1 İçin Alanlar (Tip 1: textInput, Tip 2: dropdownlist)
-class Threshold(Config):
-    name: Literal["Threshold"] = "Threshold"
+# Option 1 İçin Form Ögeleri (Tip 1: textInput, Tip 2: dropdownlist)
+class ThresholdValue(Config):
+    name: Literal["ThresholdValue"] = "ThresholdValue"
     value: float = Field(default=0.5, ge=0.0, le=1.0)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
 
-    class Config: title = "Eşik Değeri"
+    class Config: title = "Eşik (Threshold)"
 
 
-class OptEnable(Config):
-    name: Literal["optEnable"] = "optEnable"
+class OptionEnable(Config):
+    name: Literal["optionEnable"] = "optionEnable"  # Option'lar camelCase
     value: Literal["Enable"] = "Enable"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -81,8 +79,8 @@ class OptEnable(Config):
     class Config: title = "Aktif"
 
 
-class OptDisable(Config):
-    name: Literal["optDisable"] = "optDisable"
+class OptionDisable(Config):
+    name: Literal["optionDisable"] = "optionDisable"
     value: Literal["Disable"] = "Disable"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -92,25 +90,25 @@ class OptDisable(Config):
 
 class FeatureToggle(Config):
     name: Literal["FeatureToggle"] = "FeatureToggle"
-    value: Union[OptEnable, OptDisable]
+    value: Union[OptionEnable, OptionDisable]
     type: Literal["object"] = "object"
     field: Literal["dropdownlist"] = "dropdownlist"
 
     class Config: title = "Özellik Durumu"
 
 
-# Option 2 İçin Alanlar (Tip 1: textInput, Tip 2: selectBox)
-class Sensitivity(Config):
-    name: Literal["Sensitivity"] = "Sensitivity"
-    value: float = Field(default=1.0)
+# Option 2 İçin Form Ögeleri (Tip 1: textInput, Tip 2: selectBox)
+class SensitivityValue(Config):
+    name: Literal["SensitivityValue"] = "SensitivityValue"
+    value: float = Field(default=10.0)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
 
     class Config: title = "Hassasiyet"
 
 
-class ColorRed(Config):
-    name: Literal["colorRed"] = "colorRed"
+class OptionRed(Config):
+    name: Literal["optionRed"] = "optionRed"
     value: Literal["Red"] = "Red"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -118,8 +116,8 @@ class ColorRed(Config):
     class Config: title = "Kırmızı"
 
 
-class ColorBlue(Config):
-    name: Literal["colorBlue"] = "colorBlue"
+class OptionBlue(Config):
+    name: Literal["optionBlue"] = "optionBlue"
     value: Literal["Blue"] = "Blue"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -127,20 +125,20 @@ class ColorBlue(Config):
     class Config: title = "Mavi"
 
 
-class ColorSelect(Config):
-    name: Literal["ColorSelect"] = "ColorSelect"
-    value: List[Union[ColorRed, ColorBlue]]
+class ColorSelectBox(Config):
+    name: Literal["ColorSelectBox"] = "ColorSelectBox"
+    value: List[Union[OptionRed, OptionBlue]]
     type: Literal["object"] = "object"
     field: Literal["selectBox"] = "selectBox"
 
     class Config: title = "Renk Seçimi"
 
 
-# Ana Seçenekler (Option'ların isimleri camelCase olmalı)
+# Ana Seçenekler (Dependent'ın opsiyonları)
 class OptionBasic(Config):
     name: Literal["optionBasic"] = "optionBasic"
-    threshold: Threshold
-    featureToggle: FeatureToggle
+    thresholdValue: ThresholdValue  # Field 1
+    featureToggle: FeatureToggle  # Field 2
     value: Literal["Basic"] = "Basic"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -150,8 +148,8 @@ class OptionBasic(Config):
 
 class OptionAdvanced(Config):
     name: Literal["optionAdvanced"] = "optionAdvanced"
-    sensitivity: Sensitivity
-    colorSelect: ColorSelect
+    sensitivityValue: SensitivityValue  # Field 1
+    colorSelectBox: ColorSelectBox  # Field 2
     value: Literal["Advanced"] = "Advanced"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -171,22 +169,14 @@ class ConfigMode(Config):
 # --- 3. EXECUTOR 1: Compare (1 Input, 1 Output) ---
 class CompareInputs(Inputs):
     inputImage: InputImage
-    value: str = "Inputs"
-    type: Literal["object"] = "object"
-    field: Literal["input"] = "input"
 
 
 class CompareConfigs(Configs):
     configMode: ConfigMode
-    value: str = "Configs"
-    type: Literal["object"] = "object"
-    field: Literal["config"] = "config"
 
 
 class CompareOutputs(Outputs):
-    OutputImage: OutputImage  # İlk harf mecburen büyük
-    type: Literal["object"] = "object"
-    field: Literal["output"] = "output"
+    outputImage: OutputImage
 
 
 class CompareRequest(Request):
@@ -215,23 +205,15 @@ class Compare(Config):
 class FilterInputs(Inputs):
     inputImage: InputImage
     inputDetections: InputDetections
-    value: str = "Inputs"
-    type: Literal["object"] = "object"
-    field: Literal["input"] = "input"
 
 
 class FilterConfigs(Configs):
     configMode: ConfigMode
-    value: str = "Configs"
-    type: Literal["object"] = "object"
-    field: Literal["config"] = "config"
 
 
 class FilterOutputs(Outputs):
-    OutputImage: OutputImage  # İlk harf mecburen büyük
-    OutputDetections: OutputDetections  # İlk harf mecburen büyük
-    type: Literal["object"] = "object"
-    field: Literal["output"] = "output"
+    outputImage: OutputImage
+    outputDetections: OutputDetections
 
 
 class FilterRequest(Request):
@@ -268,13 +250,9 @@ class ConfigExecutor(Config):
 
 class PackageConfigs(Configs):
     executor: ConfigExecutor
-    value: str = "Configs"
-    type: Literal["object"] = "object"
-    field: Literal["config"] = "config"
 
 
 class PackageModel(Package):
     configs: PackageConfigs
     type: Literal["component"] = "component"
     name: Literal["DemoPackage"] = "DemoPackage"
-    uID: str = "demo_pkg_001"

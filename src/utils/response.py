@@ -10,15 +10,16 @@ from components.DemoPackage.src.models.PackageModel import (
 def build_compare_response(context):
     output_image = OutputImage(value=context.output_image)
 
-    # PascalCase eşleşmesi
-    outputs = CompareOutputs(OutputImage=output_image)
-
+    outputs = CompareOutputs(outputImage=output_image)
     response = CompareResponse(outputs=outputs)
     executor = Compare(value=response)
     config_executor = ConfigExecutor(value=executor)
     package_configs = PackageConfigs(executor=config_executor)
 
-    package = PackageHelper(packageModel=PackageModel, packageConfigs=package_configs)
+    package = PackageHelper(
+        packageModel=PackageModel,
+        packageConfigs=package_configs
+    )
     return package.build_model(context)
 
 
@@ -26,13 +27,14 @@ def build_filter_response(context):
     output_image = OutputImage(value=context.output_image)
     output_dets = OutputDetections(value=context.output_detections)
 
-    # PascalCase eşleşmesi
-    outputs = FilterOutputs(OutputImage=output_image, OutputDetections=output_dets)
-
+    outputs = FilterOutputs(outputImage=output_image, outputDetections=output_dets)
     response = FilterResponse(outputs=outputs)
     executor = Filter(value=response)
     config_executor = ConfigExecutor(value=executor)
     package_configs = PackageConfigs(executor=config_executor)
 
-    package = PackageHelper(packageModel=PackageModel, packageConfigs=package_configs)
+    package = PackageHelper(
+        packageModel=PackageModel,
+        packageConfigs=package_configs
+    )
     return package.build_model(context)
