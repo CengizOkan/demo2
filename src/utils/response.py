@@ -1,38 +1,19 @@
-from sdks.novavision.src.helper.package import PackageHelper
-
 from components.DemoPackage.src.models.PackageModel import (
-    PackageModel, PackageConfigs, ConfigExecutor,
-    Filter, FilterResponse, FilterOutputs, OutputDataOne, OutputDataTwo,
-    Compare, CompareResponse, CompareOutputs
+    FilterResponse, OutputImage, CompareResponse, OutputScore, OutputLabel
 )
 
-
 def build_filter_response(context):
-    out_data = OutputDataOne(value=context.output_data)
-    outputs = FilterOutputs(OutputDataOne=out_data)
-    response = FilterResponse(outputs=outputs)
-    executor = Filter(value=response)
-    config_exec = ConfigExecutor(value=executor)
-    pkg_configs = PackageConfigs(executor=config_exec)
+    outputs = []
+    if hasattr(context, 'output_image') and context.output_image is not None:
+        outputs.append(OutputImage(value=context.output_image))
 
-    package = PackageHelper(
-        packageModel=PackageModel,
-        packageConfigs=pkg_configs
-    )
-    return package.build_model(context)
-
+    return FilterResponse(outputs=outputs)
 
 def build_compare_response(context):
-    out_one = OutputDataOne(value=context.output_one)
-    out_two = OutputDataTwo(value=context.output_two)
-    outputs = CompareOutputs(OutputDataOne=out_one, OutputDataTwo=out_two)
-    response = CompareResponse(outputs=outputs)
-    executor = Compare(value=response)
-    config_exec = ConfigExecutor(value=executor)
-    pkg_configs = PackageConfigs(executor=config_exec)
+    outputs = []
+    if hasattr(context, 'output_score'):
+        outputs.append(OutputScore(value=context.output_score))
+    if hasattr(context, 'output_label'):
+        outputs.append(OutputLabel(value=context.output_label))
 
-    package = PackageHelper(
-        packageModel=PackageModel,
-        packageConfigs=pkg_configs
-    )
-    return package.build_model(context)
+    return CompareResponse(outputs=outputs)
