@@ -8,8 +8,7 @@ from components.DemoPackage.src.models.PackageModel import PackageModel
 from components.DemoPackage.src.utils.response import build_filter_response
 
 class Filter(Component):
-    def __init__(self, request, bootstrap):
-        # Kılavuz kuralına göre sadece request alıyoruz
+    def __init__(self, request, bootstrap=None):
         super().__init__(request)
         self.request.model = PackageModel(**(self.request.data))
         self.input_data = self.request.get_param("inputDataOne")
@@ -19,7 +18,6 @@ class Filter(Component):
         return {}
 
     def run(self):
-        # Medya servisini tetiklememek için resim değil basit JSON data kullanıyoruz.
         self.output_data = self.input_data if self.input_data else {"durum": "basarili"}
         return build_filter_response(context=self)
 

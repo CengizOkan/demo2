@@ -8,7 +8,7 @@ from components.DemoPackage.src.models.PackageModel import PackageModel
 from components.DemoPackage.src.utils.response import build_compare_response
 
 class Compare(Component):
-    def __init__(self, request, bootstrap):
+    def __init__(self, request, bootstrap=None):
         super().__init__(request)
         self.request.model = PackageModel(**(self.request.data))
 
@@ -17,8 +17,8 @@ class Compare(Component):
         return {}
 
     def run(self):
-        self.output_score = 1.0
-        self.output_label = "Demo Basarili"
+        self.output_one = {"durum": "basarili"}
+        self.output_two = {"durum": "basarili"}
         return build_compare_response(context=self)
 
 if __name__ == "__main__":

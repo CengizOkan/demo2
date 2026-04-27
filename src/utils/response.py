@@ -2,14 +2,14 @@ from sdks.novavision.src.helper.package import PackageHelper
 
 from components.DemoPackage.src.models.PackageModel import (
     PackageModel, PackageConfigs, ConfigExecutor,
-    Filter, FilterResponse, FilterOutputs, OutputData,
-    Compare, CompareResponse, CompareOutputs, OutputScore, OutputLabel
+    Filter, FilterResponse, FilterOutputs, OutputDataOne, OutputDataTwo,
+    Compare, CompareResponse, CompareOutputs
 )
 
 
 def build_filter_response(context):
-    out_data = OutputData(value=context.output_data)
-    outputs = FilterOutputs(OutputData=out_data)
+    out_data = OutputDataOne(value=context.output_data)
+    outputs = FilterOutputs(OutputDataOne=out_data)
     response = FilterResponse(outputs=outputs)
     executor = Filter(value=response)
     config_exec = ConfigExecutor(value=executor)
@@ -23,9 +23,9 @@ def build_filter_response(context):
 
 
 def build_compare_response(context):
-    out_score = OutputScore(value=context.output_score)
-    out_label = OutputLabel(value=context.output_label)
-    outputs = CompareOutputs(OutputScore=out_score, OutputLabel=out_label)
+    out_one = OutputDataOne(value=context.output_one)
+    out_two = OutputDataTwo(value=context.output_two)
+    outputs = CompareOutputs(OutputDataOne=out_one, OutputDataTwo=out_two)
     response = CompareResponse(outputs=outputs)
     executor = Compare(value=response)
     config_exec = ConfigExecutor(value=executor)
