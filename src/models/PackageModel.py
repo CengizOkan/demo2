@@ -87,16 +87,28 @@ class ConfigMode(Config):
 
 # --- EXECUTORS ---
 class CompareInputs(Inputs):
+    name: Literal["Inputs"] = "Inputs" # EKSİK ALANLAR DOLDURULDU
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
     inputImage: InputImage
 
 class CompareConfigs(Configs):
+    name: Literal["Configs"] = "Configs"
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
     configMode: ConfigMode
 
 class CompareOutputs(Outputs):
+    name: Literal["Outputs"] = "Outputs"
+    value: str = "Outputs"
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
     outputImage: OutputImage
 
 class CompareRequest(Request):
-    inputs: Optional[CompareInputs]
+    inputs: Optional[CompareInputs] = None
     configs: CompareConfigs
     class Config: schema_extra = {"target": "configs"}
 
@@ -113,18 +125,30 @@ class Compare(Config):
         schema_extra = {"target": {"value": 0}}
 
 class FilterInputs(Inputs):
+    name: Literal["Inputs"] = "Inputs"
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
     inputImage: InputImage
     inputDetections: InputDetections
 
 class FilterConfigs(Configs):
+    name: Literal["Configs"] = "Configs"
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
     configMode: ConfigMode
 
 class FilterOutputs(Outputs):
+    name: Literal["Outputs"] = "Outputs"
+    value: str = "Outputs"
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
     outputImage: OutputImage
     outputDetections: OutputDetections
 
 class FilterRequest(Request):
-    inputs: Optional[FilterInputs]
+    inputs: Optional[FilterInputs] = None
     configs: FilterConfigs
     class Config: schema_extra = {"target": "configs"}
 
@@ -148,9 +172,14 @@ class ConfigExecutor(Config):
     class Config: title = "Task"
 
 class PackageConfigs(Configs):
+    name: Literal["Configs"] = "Configs"
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
     executor: ConfigExecutor
 
 class PackageModel(Package):
     configs: PackageConfigs
     type: Literal["component"] = "component"
     name: Literal["DemoPackage"] = "DemoPackage"
+    uID: str = "demo_pkg_001"
