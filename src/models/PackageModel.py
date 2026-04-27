@@ -1,156 +1,110 @@
-from pydantic import Field, validator
-from typing import List, Optional, Union, Literal
-from sdks.novavision.src.base.model import (
-    Package, Image, Detection,
-    Inputs, Configs, Outputs, Response, Request,
-    Output, Input, Config
-)
+from pydantic import Field
+from typing import Optional, Union, Literal
+from sdks.novavision.src.base.model import Package, Inputs, Configs, Outputs, Response, Request, Output, Input, Config
 
-class InputImage(Input):
-    name: Literal["inputImage"] = "inputImage"
-    value: Union[List[Image], Image]
-    type: str = "object"
-    @validator("type", pre=True, always=True)
-    def set_type(cls, value, values):
-        val = values.get('value')
-        return "object" if isinstance(val, Image) else "list"
-    class Config: title = "Input Image"
-
-class InputDetections(Input):
-    name: Literal["inputDetections"] = "inputDetections"
-    value: Union[List[Detection], Detection]
-    type: str = "object"
-    class Config: title = "Input Detections"
-
-class OutputImage(Output):
-    name: Literal["outputImage"] = "outputImage"
-    value: Union[List[Image], Image]
-    type: str = "object"
-    @validator("type", pre=True, always=True)
-    def set_type(cls, value, values):
-        val = values.get('value')
-        return "object" if isinstance(val, Image) else "list"
-    class Config: title = "Output Image"
-
-class OutputDetections(Output):
-    name: Literal["outputDetections"] = "outputDetections"
-    value: Union[List[Detection], Detection]
-    type: str = "object"
-    class Config: title = "Output Detections"
-
-# --- DEPENDENT DROPDOWN ---
-class ThresholdVal(Config):
-    name: Literal["ThresholdVal"] = "ThresholdVal"
-    value: float = Field(default=0.5)
-    type: Literal["number"] = "number"
-    field: Literal["textInput"] = "textInput"
-    class Config: title = "Eşik"
-
-class OptActive(Config):
-    name: Literal["optActive"] = "optActive"
-    value: Literal["Active"] = "Active"
-    type: Literal["string"] = "string"
-    field: Literal["option"] = "option"
-    class Config: title = "Aktif"
-
-class StatusDrop(Config):
-    name: Literal["StatusDrop"] = "StatusDrop"
-    value: Union[OptActive]
-    type: Literal["object"] = "object"
-    field: Literal["dropdownlist"] = "dropdownlist"
-    class Config: title = "Durum"
-
-class OptionBasic(Config):
-    name: Literal["optionBasic"] = "optionBasic"
-    thresholdVal: ThresholdVal
-    statusDrop: StatusDrop
-    value: Literal["Basic"] = "Basic"
-    type: Literal["string"] = "string"
-    field: Literal["option"] = "option"
-    class Config: title = "Temel Mod"
-
-class OptionAdvanced(Config):
-    name: Literal["optionAdvanced"] = "optionAdvanced"
-    thresholdVal: ThresholdVal
-    statusDrop: StatusDrop
-    value: Literal["Advanced"] = "Advanced"
-    type: Literal["string"] = "string"
-    field: Literal["option"] = "option"
-    class Config: title = "Gelişmiş Mod"
-
-class ConfigMode(Config):
-    name: Literal["ConfigMode"] = "ConfigMode"
-    value: Union[OptionBasic, OptionAdvanced]
-    type: Literal["object"] = "object"
-    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Çalışma Modu"
-
-# --- EXECUTORS ---
-class CompareInputs(Inputs):
-    name: Literal["Inputs"] = "Inputs" # EKSİK ALANLAR DOLDURULDU
-    value: str = "Inputs"
+# --- 1. INPUTS (Media Service Bypass - Sadece JSON Data) ---
+class InputDataOne(Input):
+    name: Literal["inputDataOne"] = "inputDataOne"
+    value: Union[dict, list] # Kılavuz kuralı: Any kullanılamaz, dict/list olmalı
     type: Literal["object"] = "object"
     field: Literal["input"] = "input"
-    inputImage: InputImage
 
-class CompareConfigs(Configs):
-    name: Literal["Configs"] = "Configs"
-    value: str = "Configs"
+class InputDataTwo(Input):
+    name: Literal["inputDataTwo"] = "inputDataTwo"
+    value: Union[dict, list]
     type: Literal["object"] = "object"
-    field: Literal["config"] = "config"
-    configMode: ConfigMode
+    field: Literal["input"] = "input"
 
-class CompareOutputs(Outputs):
-    name: Literal["Outputs"] = "Outputs"
-    value: str = "Outputs"
+# --- 2. OUTPUTS (Şartname: Outputların baş harfleri büyük yazılmalıdır) ---
+class OutputData(Output):
+    name: Literal["OutputData"] = "OutputData"
+    value: Union[dict, list]
     type: Literal["object"] = "object"
     field: Literal["output"] = "output"
-    outputImage: OutputImage
 
-class CompareRequest(Request):
-    inputs: Optional[CompareInputs] = None
-    configs: CompareConfigs
-    class Config: schema_extra = {"target": "configs"}
+class OutputScore(Output):
+    name: Literal["OutputScore"] = "OutputScore"
+    value: float
+    type: Literal["number"] = "number"
+    field: Literal["output"] = "output"
 
-class CompareResponse(Response):
-    outputs: CompareOutputs
+class OutputLabel(Output):
+    name: Literal["OutputLabel"] = "OutputLabel"
+    value: str
+    type: Literal["string"] = "string"
+    field: Literal["output"] = "output"
 
-class Compare(Config):
-    name: Literal["Compare"] = "Compare"
-    value: Union[CompareRequest, CompareResponse]
-    type: Literal["object"] = "object"
+# --- 3. BAĞLI ALANLAR (Trello: 2 different types of field) ---
+class BlurValue(Config):
+    name: Literal["BlurValue"] = "BlurValue"
+    value: float = 1.5
+    type: Literal["number"] = "number" # Tip 1: Sayısal
+    field: Literal["textInput"] = "textInput"
+    class Config:
+        title = "Filtre Degeri"
+
+class FilterNote(Config):
+    name: Literal["FilterNote"] = "FilterNote"
+    value: str = "Islem Onayi"
+    type: Literal["string"] = "string" # Tip 2: Metin
+    field: Literal["textInput"] = "textInput"
+    class Config:
+        title = "Islem Notu"
+
+# --- 4. SEÇENEKLER ---
+class OptionBlur(Config):
+    name: Literal["optionBlur"] = "optionBlur"
+    value: Literal["optionBlur"] = "optionBlur"
+    blurValue: BlurValue
+    filterNote: FilterNote
+    type: Literal["string"] = "string"
     field: Literal["option"] = "option"
     class Config:
-        title = "Compare"
-        schema_extra = {"target": {"value": 0}}
+        title = "Bulaniklik"
 
+class OptionSharpen(Config):
+    name: Literal["optionSharpen"] = "optionSharpen"
+    value: Literal["optionSharpen"] = "optionSharpen"
+    blurValue: BlurValue
+    filterNote: FilterNote
+    type: Literal["string"] = "string"
+    field: Literal["option"] = "option"
+    class Config:
+        title = "Keskinlik"
+
+# --- 5. DEPENDENT DROPDOWN ---
+class ConfigDependent(Config):
+    name: Literal["ConfigDependent"] = "ConfigDependent"
+    value: Union[OptionBlur, OptionSharpen]
+    type: Literal["object"] = "object"
+    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
+    class Config:
+        title = "Filtre Secimi"
+
+# --- 6. FIRST EXECUTOR (1-IN, 1-OUT) ---
 class FilterInputs(Inputs):
-    name: Literal["Inputs"] = "Inputs"
+    inputDataOne: InputDataOne
     value: str = "Inputs"
     type: Literal["object"] = "object"
     field: Literal["input"] = "input"
-    inputImage: InputImage
-    inputDetections: InputDetections
-
-class FilterConfigs(Configs):
-    name: Literal["Configs"] = "Configs"
-    value: str = "Configs"
-    type: Literal["object"] = "object"
-    field: Literal["config"] = "config"
-    configMode: ConfigMode
 
 class FilterOutputs(Outputs):
-    name: Literal["Outputs"] = "Outputs"
+    OutputData: OutputData
     value: str = "Outputs"
     type: Literal["object"] = "object"
     field: Literal["output"] = "output"
-    outputImage: OutputImage
-    outputDetections: OutputDetections
+
+class FilterConfigs(Configs):
+    configDependent: ConfigDependent
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
 
 class FilterRequest(Request):
-    inputs: Optional[FilterInputs] = None
+    inputs: Optional[FilterInputs]
     configs: FilterConfigs
-    class Config: schema_extra = {"target": "configs"}
+    class Config:
+        schema_extra = {"target": "configs"}
 
 class FilterResponse(Response):
     outputs: FilterOutputs
@@ -161,25 +115,65 @@ class Filter(Config):
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
     class Config:
-        title = "Filter"
+        title = "Filtreleme Görevi"
         schema_extra = {"target": {"value": 0}}
 
-class ConfigExecutor(Config):
-    name: Literal["ConfigExecutor"] = "ConfigExecutor"
-    value: Union[Compare, Filter]
-    type: Literal["executor"] = "executor"
-    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Task"
+# --- 7. SECOND EXECUTOR (2-IN, 2-OUT) ---
+class CompareInputs(Inputs):
+    inputDataOne: InputDataOne
+    inputDataTwo: InputDataTwo
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
 
-class PackageConfigs(Configs):
-    name: Literal["Configs"] = "Configs"
+class CompareOutputs(Outputs):
+    OutputScore: OutputScore
+    OutputLabel: OutputLabel
+    value: str = "Outputs"
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
+
+class CompareConfigs(Configs):
+    configDependent: ConfigDependent
     value: str = "Configs"
     type: Literal["object"] = "object"
     field: Literal["config"] = "config"
+
+class CompareRequest(Request):
+    inputs: Optional[CompareInputs]
+    configs: CompareConfigs
+    class Config:
+        schema_extra = {"target": "configs"}
+
+class CompareResponse(Response):
+    outputs: CompareOutputs
+
+class Compare(Config):
+    name: Literal["Compare"] = "Compare"
+    value: Union[CompareRequest, CompareResponse]
+    type: Literal["object"] = "object"
+    field: Literal["option"] = "option"
+    class Config:
+        title = "Kiyaslama Görevi"
+        schema_extra = {"target": {"value": 0}}
+
+# --- 8. PACKAGE ANA YAPI ---
+class ConfigExecutor(Config):
+    name: Literal["ConfigExecutor"] = "ConfigExecutor"
+    value: Union[Filter, Compare] # Trello Şartı: En az 2 Executor
+    type: Literal["executor"] = "executor"
+    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
+    class Config:
+        title = "Görev Seçin"
+
+class PackageConfigs(Configs):
     executor: ConfigExecutor
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
 
 class PackageModel(Package):
     configs: PackageConfigs
     type: Literal["component"] = "component"
     name: Literal["DemoPackage"] = "DemoPackage"
-    uID: str = "demo_pkg_001"
+    uID: str = "1331112"
