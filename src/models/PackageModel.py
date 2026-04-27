@@ -1,117 +1,114 @@
-from pydantic import Field
-from typing import Optional, Union, Literal
-from sdks.novavision.src.base.model import Package, Image, Inputs, Configs, Outputs, Response, Request, Output, Input, Config
+from pydantic import Field, validator
+from typing import List, Optional, Union, Literal
+from sdks.novavision.src.base.model import (
+    Package, Image, Detection,
+    Inputs, Configs, Outputs, Response, Request,
+    Output, Input, Config
+)
 
-# --- 1. INPUTS ---
-class InputImageOne(Input):
-    name: Literal["inputImageOne"] = "inputImageOne"
-    value: Image
-    type: Literal["object"] = "object"
+class InputImage(Input):
+    name: Literal["inputImage"] = "inputImage"
+    value: Union[List[Image], Image]
+    type: str = "object"
+    @validator("type", pre=True, always=True)
+    def set_type(cls, value, values):
+        val = values.get('value')
+        return "object" if isinstance(val, Image) else "list"
+    class Config: title = "Input Image"
 
-class InputImageTwo(Input):
-    name: Literal["inputImageTwo"] = "inputImageTwo"
-    value: Image
-    type: Literal["object"] = "object"
+class InputDetections(Input):
+    name: Literal["inputDetections"] = "inputDetections"
+    value: Union[List[Detection], Detection]
+    type: str = "object"
+    class Config: title = "Input Detections"
 
-# --- 2. OUTPUTS (Kılavuz Şartı: Baş harfler büyük) ---
 class OutputImage(Output):
-    name: Literal["OutputImage"] = "OutputImage"
-    value: Image
-    type: Literal["object"] = "object"
+    name: Literal["outputImage"] = "outputImage"
+    value: Union[List[Image], Image]
+    type: str = "object"
+    @validator("type", pre=True, always=True)
+    def set_type(cls, value, values):
+        val = values.get('value')
+        return "object" if isinstance(val, Image) else "list"
+    class Config: title = "Output Image"
 
-class OutputScore(Output):
-    name: Literal["OutputScore"] = "OutputScore"
-    value: float
+class OutputDetections(Output):
+    name: Literal["outputDetections"] = "outputDetections"
+    value: Union[List[Detection], Detection]
+    type: str = "object"
+    class Config: title = "Output Detections"
+
+# --- DEPENDENT DROPDOWN ---
+class ThresholdVal(Config):
+    name: Literal["ThresholdVal"] = "ThresholdVal"
+    value: float = Field(default=0.5)
     type: Literal["number"] = "number"
-
-class OutputLabel(Output):
-    name: Literal["OutputLabel"] = "OutputLabel"
-    value: str
-    type: Literal["string"] = "string"
-
-# --- 3. BAĞLI ALANLAR (Trello: 2 Farklı Tip) ---
-class FieldNumber(Config):
-    name: Literal["FieldNumber"] = "FieldNumber"
-    value: float = 1.0
-    type: Literal["number"] = "number" # Tip 1: Sayısal
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Sayısal Değer"
+    class Config: title = "Eşik"
 
-class FieldString(Config):
-    name: Literal["FieldString"] = "FieldString"
-    value: str = "Demo"
-    type: Literal["string"] = "string" # Tip 2: Metin
-    field: Literal["textInput"] = "textInput"
-    class Config: title = "Metin Değeri"
-
-# --- 4. SEÇENEKLER ---
-class OptionFirst(Config):
-    name: Literal["optionFirst"] = "optionFirst"
-    value: Literal["optionFirst"] = "optionFirst"
-    fieldNumber: FieldNumber
-    fieldString: FieldString
+class OptActive(Config):
+    name: Literal["optActive"] = "optActive"
+    value: Literal["Active"] = "Active"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
-    class Config: title = "Birinci Seçenek"
+    class Config: title = "Aktif"
 
-class OptionSecond(Config):
-    name: Literal["optionSecond"] = "optionSecond"
-    value: Literal["optionSecond"] = "optionSecond"
-    fieldNumber: FieldNumber
-    fieldString: FieldString
+class StatusDrop(Config):
+    name: Literal["StatusDrop"] = "StatusDrop"
+    value: Union[OptActive]
+    type: Literal["object"] = "object"
+    field: Literal["dropdownlist"] = "dropdownlist"
+    class Config: title = "Durum"
+
+class OptionBasic(Config):
+    name: Literal["optionBasic"] = "optionBasic"
+    thresholdVal: ThresholdVal
+    statusDrop: StatusDrop
+    value: Literal["Basic"] = "Basic"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
-    class Config: title = "İkinci Seçenek"
+    class Config: title = "Temel Mod"
 
-# --- 5. DEPENDENT DROPDOWN ---
-class MyDependent(Config):
-    name: Literal["MyDependent"] = "MyDependent"
-    value: Union[OptionFirst, OptionSecond]
+class OptionAdvanced(Config):
+    name: Literal["optionAdvanced"] = "optionAdvanced"
+    thresholdVal: ThresholdVal
+    statusDrop: StatusDrop
+    value: Literal["Advanced"] = "Advanced"
+    type: Literal["string"] = "string"
+    field: Literal["option"] = "option"
+    class Config: title = "Gelişmiş Mod"
+
+class ConfigMode(Config):
+    name: Literal["ConfigMode"] = "ConfigMode"
+    value: Union[OptionBasic, OptionAdvanced]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Ayarlar"
+    class Config: title = "Çalışma Modu"
 
-# --- 6. FILTER EXECUTOR (1-IN, 1-OUT) ---
-class FilterInputs(Inputs):
-    inputImageOne: InputImageOne
-
-class FilterOutputs(Outputs):
-    OutputImage: OutputImage
-
-class FilterConfigs(Configs):
-    myDependent: MyDependent
-
-class FilterRequest(Request):
-    inputs: Optional[FilterInputs]
-    configs: FilterConfigs
-    class Config: schema_extra = {"target": "configs"}
-
-class FilterResponse(Response):
-    outputs: FilterOutputs
-
-class Filter(Config):
-    name: Literal["Filter"] = "Filter"
-    value: Union[FilterRequest, FilterResponse]
-    type: Literal["object"] = "object"
-    field: Literal["option"] = "option"
-    class Config:
-        title = "Filtreleme Görevi"
-        schema_extra = {"target": {"value": 0}}
-
-# --- 7. COMPARE EXECUTOR (2-IN, 2-OUT) ---
+# --- EXECUTORS ---
 class CompareInputs(Inputs):
-    inputImageOne: InputImageOne
-    inputImageTwo: InputImageTwo
-
-class CompareOutputs(Outputs):
-    OutputScore: OutputScore
-    OutputLabel: OutputLabel
+    name: Literal["Inputs"] = "Inputs" # EKSİK ALANLAR DOLDURULDU
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
+    inputImage: InputImage
 
 class CompareConfigs(Configs):
-    myDependent: MyDependent
+    name: Literal["Configs"] = "Configs"
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
+    configMode: ConfigMode
+
+class CompareOutputs(Outputs):
+    name: Literal["Outputs"] = "Outputs"
+    value: str = "Outputs"
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
+    outputImage: OutputImage
 
 class CompareRequest(Request):
-    inputs: Optional[CompareInputs]
+    inputs: Optional[CompareInputs] = None
     configs: CompareConfigs
     class Config: schema_extra = {"target": "configs"}
 
@@ -124,22 +121,65 @@ class Compare(Config):
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
     class Config:
-        title = "Kıyaslama Görevi"
+        title = "Compare"
         schema_extra = {"target": {"value": 0}}
 
-# --- 8. PACKAGE ANA YAPI ---
+class FilterInputs(Inputs):
+    name: Literal["Inputs"] = "Inputs"
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
+    inputImage: InputImage
+    inputDetections: InputDetections
+
+class FilterConfigs(Configs):
+    name: Literal["Configs"] = "Configs"
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
+    configMode: ConfigMode
+
+class FilterOutputs(Outputs):
+    name: Literal["Outputs"] = "Outputs"
+    value: str = "Outputs"
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
+    outputImage: OutputImage
+    outputDetections: OutputDetections
+
+class FilterRequest(Request):
+    inputs: Optional[FilterInputs] = None
+    configs: FilterConfigs
+    class Config: schema_extra = {"target": "configs"}
+
+class FilterResponse(Response):
+    outputs: FilterOutputs
+
+class Filter(Config):
+    name: Literal["Filter"] = "Filter"
+    value: Union[FilterRequest, FilterResponse]
+    type: Literal["object"] = "object"
+    field: Literal["option"] = "option"
+    class Config:
+        title = "Filter"
+        schema_extra = {"target": {"value": 0}}
+
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
-    value: Union[Filter, Compare]
+    value: Union[Compare, Filter]
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "İşlem Seçimi"
+    class Config: title = "Task"
 
 class PackageConfigs(Configs):
+    name: Literal["Configs"] = "Configs"
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
     executor: ConfigExecutor
 
 class PackageModel(Package):
     configs: PackageConfigs
     type: Literal["component"] = "component"
     name: Literal["DemoPackage"] = "DemoPackage"
-    uID: str = "1331112"
+    uID: str = "demo_pkg_001"
