@@ -7,7 +7,7 @@ from sdks.novavision.src.base.model import (
 )
 
 
-# --- 1. Giriş/Çıkış Tanımları (SDK Modelleri Kullanılarak) ---
+# --- 1. GİRİŞ/ÇIKIŞ TANIMLARI ---
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
     value: Union[List[Image], Image]
@@ -15,10 +15,10 @@ class InputImage(Input):
 
     @validator("type", pre=True, always=True)
     def set_type_based_on_value(cls, value, values):
-        value = values.get('value')
-        if isinstance(value, Image):
+        val = values.get('value')
+        if isinstance(val, Image):
             return "object"
-        elif isinstance(value, list):
+        elif isinstance(val, list):
             return "list"
 
     class Config:
@@ -30,8 +30,7 @@ class InputDetections(Input):
     value: Union[List[Detection], Detection]
     type: str = "object"
 
-    class Config:
-        title = "Giriş Tespitleri"
+    class Config: title = "Giriş Tespitleri"
 
 
 class OutputImage(Output):
@@ -41,10 +40,10 @@ class OutputImage(Output):
 
     @validator("type", pre=True, always=True)
     def set_type_based_on_value(cls, value, values):
-        value = values.get('value')
-        if isinstance(value, Image):
+        val = values.get('value')
+        if isinstance(val, Image):
             return "object"
-        elif isinstance(value, list):
+        elif isinstance(val, list):
             return "list"
 
     class Config:
@@ -56,14 +55,11 @@ class OutputDetections(Output):
     value: Union[List[Detection], Detection]
     type: str = "object"
 
-    class Config:
-        title = "Çıkış Tespitleri"
+    class Config: title = "Çıkış Tespitleri"
 
 
-# --- 2. Dependent Dropdown Konfigürasyonları ---
-# Trello gereksinimi: Her seçenek 2 farklı tipte alan tetiklemeli.
-
-# Seçenek 1 İçin Alanlar
+# --- 2. DEPENDENT DROPDOWN KONFİGÜRASYONU ---
+# Option 1 Alanları (textInput ve dropdownlist)
 class Threshold(Config):
     name: Literal["Threshold"] = "Threshold"
     value: float = Field(default=0.5, ge=0, le=1)
@@ -73,34 +69,34 @@ class Threshold(Config):
     class Config: title = "Eşik Değeri"
 
 
-class ModeName(Config):
-    name: Literal["ModeName"] = "ModeName"
-    value: str = "Default"
-    type: Literal["string"] = "string"
-    field: Literal["textInput"] = "textInput"
-
-    class Config: title = "Mod Adı"
-
-
-# Seçenek 2 İçin Alanlar (Dropdown + Number)
-class ColorOption(Config):
-    name: Literal["colorRed"] = "colorRed"
-    value: Literal["Red"] = "Red"
+class OptEnable(Config):
+    name: Literal["optEnable"] = "optEnable"
+    value: Literal["Enable"] = "Enable"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
-    class Config: title = "Kırmızı"
+    class Config: title = "Aktif"
 
 
-class ColorSelection(Config):
-    name: Literal["ColorSelection"] = "ColorSelection"
-    value: Union[ColorOption]
+class OptDisable(Config):
+    name: Literal["optDisable"] = "optDisable"
+    value: Literal["Disable"] = "Disable"
+    type: Literal["string"] = "string"
+    field: Literal["option"] = "option"
+
+    class Config: title = "Pasif"
+
+
+class FeatureToggle(Config):
+    name: Literal["FeatureToggle"] = "FeatureToggle"
+    value: Union[OptEnable, OptDisable]
     type: Literal["object"] = "object"
     field: Literal["dropdownlist"] = "dropdownlist"
 
-    class Config: title = "Renk Seç"
+    class Config: title = "Özellik Durumu"
 
 
+# Option 2 Alanları (textInput ve selectBox)
 class Sensitivity(Config):
     name: Literal["Sensitivity"] = "Sensitivity"
     value: int = 50
@@ -110,27 +106,54 @@ class Sensitivity(Config):
     class Config: title = "Hassasiyet"
 
 
-# Ana Seçenek Tanımları
+class ColorRed(Config):
+    name: Literal["colorRed"] = "colorRed"
+    value: Literal["Red"] = "Red"
+    type: Literal["string"] = "string"
+    field: Literal["option"] = "option"
+
+    class Config: title = "Kırmızı"
+
+
+class ColorBlue(Config):
+    name: Literal["colorBlue"] = "colorBlue"
+    value: Literal["Blue"] = "Blue"
+    type: Literal["string"] = "string"
+    field: Literal["option"] = "option"
+
+    class Config: title = "Mavi"
+
+
+class ColorSelect(Config):
+    name: Literal["ColorSelect"] = "ColorSelect"
+    value: List[Union[ColorRed, ColorBlue]]
+    type: Literal["object"] = "object"
+    field: Literal["selectBox"] = "selectBox"
+
+    class Config: title = "Renk Seçimi"
+
+
+# Ana Seçenekler
 class OptionBasic(Config):
     name: Literal["optionBasic"] = "optionBasic"
     threshold: Threshold
-    modeName: ModeName
+    featureToggle: FeatureToggle
     value: Literal["Basic"] = "Basic"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
-    class Config: title = "Temel Ayarlar"
+    class Config: title = "Temel Mod"
 
 
 class OptionAdvanced(Config):
     name: Literal["optionAdvanced"] = "optionAdvanced"
-    colorSelection: ColorSelection
     sensitivity: Sensitivity
+    colorSelect: ColorSelect
     value: Literal["Advanced"] = "Advanced"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
-    class Config: title = "Gelişmiş Ayarlar"
+    class Config: title = "Gelişmiş Mod"
 
 
 class ConfigMode(Config):
@@ -142,17 +165,25 @@ class ConfigMode(Config):
     class Config: title = "Çalışma Modu"
 
 
-# --- 3. Executor 1: Compare (1 Input, 1 Output) ---
+# --- 3. EXECUTOR 1: Compare (1 Input, 1 Output) ---
 class CompareInputs(Inputs):
     inputImage: InputImage
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
 
 
 class CompareConfigs(Configs):
     configMode: ConfigMode
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
 
 
 class CompareOutputs(Outputs):
-    outputImage: OutputImage
+    OutputImage: OutputImage  # İlk harf zorunlu olarak büyük
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
 
 
 class CompareRequest(Request):
@@ -177,19 +208,27 @@ class Compare(Config):
         schema_extra = {"target": {"value": 0}}
 
 
-# --- 4. Executor 2: Filter (2 Inputs, 2 Outputs) ---
+# --- 4. EXECUTOR 2: Filter (2 Inputs, 2 Outputs) ---
 class FilterInputs(Inputs):
     inputImage: InputImage
     inputDetections: InputDetections
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
 
 
 class FilterConfigs(Configs):
     configMode: ConfigMode
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
 
 
 class FilterOutputs(Outputs):
-    outputImage: OutputImage
-    outputDetections: OutputDetections
+    OutputImage: OutputImage  # İlk harf zorunlu olarak büyük
+    OutputDetections: OutputDetections  # İlk harf zorunlu olarak büyük
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
 
 
 class FilterRequest(Request):
@@ -214,7 +253,7 @@ class Filter(Config):
         schema_extra = {"target": {"value": 0}}
 
 
-# --- 5. Paket Kök Tanımı ---
+# --- 5. PAKET KÖK TANIMI ---
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
     value: Union[Compare, Filter]
@@ -226,6 +265,9 @@ class ConfigExecutor(Config):
 
 class PackageConfigs(Configs):
     executor: ConfigExecutor
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
 
 
 class PackageModel(Package):

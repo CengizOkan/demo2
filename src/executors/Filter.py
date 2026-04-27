@@ -14,7 +14,6 @@ class Filter(Component):
         super().__init__(request, bootstrap)
         self.request.model = PackageModel(**(self.request.data))
 
-        # 2 Input alınıyor
         self.input_image = self.request.get_param("inputImage")
         self.input_detections = self.request.get_param("inputDetections")
 
@@ -23,7 +22,6 @@ class Filter(Component):
         return {}
 
     def run(self):
-        # İşlem mantığı
         self.output_image = self.input_image
         self.output_detections = self.input_detections
         return build_filter_response(context=self)
