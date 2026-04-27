@@ -10,7 +10,7 @@ from components.DemoPackage.src.models.PackageModel import (
 def build_compare_response(context):
     output_image = OutputImage(value=context.output_image)
 
-    # PascalCase attribute ile veriyoruz
+    # PascalCase eşleşmesi
     outputs = CompareOutputs(OutputImage=output_image)
 
     response = CompareResponse(outputs=outputs)
@@ -26,7 +26,7 @@ def build_filter_response(context):
     output_image = OutputImage(value=context.output_image)
     output_dets = OutputDetections(value=context.output_detections)
 
-    # PascalCase attribute ile veriyoruz
+    # PascalCase eşleşmesi
     outputs = FilterOutputs(OutputImage=output_image, OutputDetections=output_dets)
 
     response = FilterResponse(outputs=outputs)

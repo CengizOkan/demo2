@@ -1,25 +1,38 @@
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
+from sdks.novavision.src.helper.package import PackageHelper
+from components.DemoPackage.src.models.PackageModel import (
+    PackageModel, PackageConfigs, ConfigExecutor,
+    CompareOutputs, CompareResponse, Compare,
+    FilterOutputs, FilterResponse, Filter,
+    OutputImage, OutputDetections
+)
 
-from sdks.novavision.src.base.component import Component
-from sdks.novavision.src.helper.executor import Executor
-from components.DemoPackage.src.utils.response import build_compare_response
-from components.DemoPackage.src.models.PackageModel import PackageModel
 
-class Compare(Component):
-    def __init__(self, request, bootstrap):
-        super().__init__(request, bootstrap)
-        self.request.model = PackageModel(**(self.request.data))
-        self.input_image = self.request.get_param("inputImage")
+def build_compare_response(context):
+    output_image = OutputImage(value=context.output_image)
 
-    @staticmethod
-    def bootstrap(config: dict) -> dict:
-        return {}
+    # PascalCase eşleşmesi
+    outputs = CompareOutputs(OutputImage=output_image)
 
-    def run(self):
-        self.output_image = self.input_image
-        return build_compare_response(context=self)
+    response = CompareResponse(outputs=outputs)
+    executor = Compare(value=response)
+    config_executor = ConfigExecutor(value=executor)
+    package_configs = PackageConfigs(executor=config_executor)
 
-if "__main__" == __name__:
-    Executor(sys.argv[1]).run()
+    package = PackageHelper(packageModel=PackageModel, packageConfigs=package_configs)
+    return package.build_model(context)
+
+
+def build_filter_response(context):
+    output_image = OutputImage(value=context.output_image)
+    output_dets = OutputDetections(value=context.output_detections)
+
+    # PascalCase eşleşmesi
+    outputs = FilterOutputs(OutputImage=output_image, OutputDetections=output_dets)
+
+    response = FilterResponse(outputs=outputs)
+    executor = Filter(value=response)
+    config_executor = ConfigExecutor(value=executor)
+    package_configs = PackageConfigs(executor=config_executor)
+
+    package = PackageHelper(packageModel=PackageModel, packageConfigs=package_configs)
+    return package.build_model(context)

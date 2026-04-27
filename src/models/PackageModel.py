@@ -3,11 +3,12 @@ from typing import List, Optional, Union, Literal
 from sdks.novavision.src.base.model import (
     Package, Image, Detection,
     Inputs, Configs, Outputs, Response, Request,
-    Output, Input, Config, Param
+    Output, Input, Config
 )
 
 
 # --- 1. GİRİŞ/ÇIKIŞ TANIMLARI ---
+# Inputlar camelCase olmak zorundadır.
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
     value: Union[List[Image], Image]
@@ -33,8 +34,9 @@ class InputDetections(Input):
     class Config: title = "Giriş Tespitleri"
 
 
+# Outputlar ve name alanları büyük harfle başlamak zorundadır.
 class OutputImage(Output):
-    name: Literal["outputImage"] = "outputImage"
+    name: Literal["OutputImage"] = "OutputImage"
     value: Union[List[Image], Image]
     type: str = "object"
 
@@ -51,18 +53,19 @@ class OutputImage(Output):
 
 
 class OutputDetections(Output):
-    name: Literal["outputDetections"] = "outputDetections"
+    name: Literal["OutputDetections"] = "OutputDetections"
     value: Union[List[Detection], Detection]
     type: str = "object"
 
     class Config: title = "Çıkış Tespitleri"
 
 
-# --- 2. DEPENDENT DROPDOWN KONFİGÜRASYONU ---
-# Option 1 Alanları (textInput ve dropdownlist)
+# --- 2. DEPENDENT DROPDOWN KONFİGÜRASYONU (Trello Şartı) ---
+
+# Option 1 İçin Alanlar (Tip 1: textInput, Tip 2: dropdownlist)
 class Threshold(Config):
     name: Literal["Threshold"] = "Threshold"
-    value: float = Field(default=0.5, ge=0, le=1)
+    value: float = Field(default=0.5, ge=0.0, le=1.0)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
 
@@ -96,10 +99,10 @@ class FeatureToggle(Config):
     class Config: title = "Özellik Durumu"
 
 
-# Option 2 Alanları (textInput ve selectBox)
+# Option 2 İçin Alanlar (Tip 1: textInput, Tip 2: selectBox)
 class Sensitivity(Config):
     name: Literal["Sensitivity"] = "Sensitivity"
-    value: int = 50
+    value: float = Field(default=1.0)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
 
@@ -133,7 +136,7 @@ class ColorSelect(Config):
     class Config: title = "Renk Seçimi"
 
 
-# Ana Seçenekler
+# Ana Seçenekler (Option'ların isimleri camelCase olmalı)
 class OptionBasic(Config):
     name: Literal["optionBasic"] = "optionBasic"
     threshold: Threshold
@@ -181,7 +184,7 @@ class CompareConfigs(Configs):
 
 
 class CompareOutputs(Outputs):
-    OutputImage: OutputImage  # İlk harf zorunlu olarak büyük
+    OutputImage: OutputImage  # İlk harf mecburen büyük
     type: Literal["object"] = "object"
     field: Literal["output"] = "output"
 
@@ -225,8 +228,8 @@ class FilterConfigs(Configs):
 
 
 class FilterOutputs(Outputs):
-    OutputImage: OutputImage  # İlk harf zorunlu olarak büyük
-    OutputDetections: OutputDetections  # İlk harf zorunlu olarak büyük
+    OutputImage: OutputImage  # İlk harf mecburen büyük
+    OutputDetections: OutputDetections  # İlk harf mecburen büyük
     type: Literal["object"] = "object"
     field: Literal["output"] = "output"
 
