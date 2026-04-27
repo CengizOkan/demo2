@@ -1,13 +1,13 @@
 from pydantic import Field, validator
 from typing import List, Optional, Union, Literal
 from sdks.novavision.src.base.model import (
-    Package, Image, Detection,
+    Package, Image, Detection, BoundingBox,
     Inputs, Configs, Outputs, Response, Request,
     Output, Input, Config
 )
 
 
-# --- 1. GİRİŞ/ÇIKIŞ TANIMLARI (Tamamen camelCase) ---
+# --- 1. GİRİŞ/ÇIKIŞ TANIMLARI ---
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
     value: Union[List[Image], Image]
@@ -22,7 +22,7 @@ class InputImage(Input):
             return "list"
 
     class Config:
-        title = "Giriş Resmi"
+        title = "Input Image"
 
 
 class InputDetections(Input):
@@ -30,7 +30,7 @@ class InputDetections(Input):
     value: Union[List[Detection], Detection]
     type: str = "object"
 
-    class Config: title = "Giriş Tespitleri"
+    class Config: title = "Input Detections"
 
 
 class OutputImage(Output):
@@ -47,7 +47,7 @@ class OutputImage(Output):
             return "list"
 
     class Config:
-        title = "Çıkış Resmi"
+        title = "Output Image"
 
 
 class OutputDetections(Output):
@@ -55,28 +55,28 @@ class OutputDetections(Output):
     value: Union[List[Detection], Detection]
     type: str = "object"
 
-    class Config: title = "Çıkış Tespitleri"
+    class Config: title = "Output Detections"
 
 
-# --- 2. TRELLO ŞARTI: DEPENDENT DROPDOWN ---
+# --- 2. DEPENDENT DROPDOWN KONFİGÜRASYONU ---
 
-# Option 1 İçin Form Ögeleri (Tip 1: textInput, Tip 2: dropdownlist)
+# Option 1 Alanları (textInput ve dropdownlist)
 class ThresholdValue(Config):
     name: Literal["ThresholdValue"] = "ThresholdValue"
     value: float = Field(default=0.5, ge=0.0, le=1.0)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
 
-    class Config: title = "Eşik (Threshold)"
+    class Config: title = "Threshold"
 
 
 class OptionEnable(Config):
-    name: Literal["optionEnable"] = "optionEnable"  # Option'lar camelCase
+    name: Literal["optionEnable"] = "optionEnable"
     value: Literal["Enable"] = "Enable"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
-    class Config: title = "Aktif"
+    class Config: title = "Enable"
 
 
 class OptionDisable(Config):
@@ -85,7 +85,7 @@ class OptionDisable(Config):
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
-    class Config: title = "Pasif"
+    class Config: title = "Disable"
 
 
 class FeatureToggle(Config):
@@ -94,17 +94,17 @@ class FeatureToggle(Config):
     type: Literal["object"] = "object"
     field: Literal["dropdownlist"] = "dropdownlist"
 
-    class Config: title = "Özellik Durumu"
+    class Config: title = "Feature Toggle"
 
 
-# Option 2 İçin Form Ögeleri (Tip 1: textInput, Tip 2: selectBox)
+# Option 2 Alanları (textInput ve selectBox)
 class SensitivityValue(Config):
     name: Literal["SensitivityValue"] = "SensitivityValue"
-    value: float = Field(default=10.0)
+    value: float = Field(default=1.0)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
 
-    class Config: title = "Hassasiyet"
+    class Config: title = "Sensitivity"
 
 
 class OptionRed(Config):
@@ -113,7 +113,7 @@ class OptionRed(Config):
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
-    class Config: title = "Kırmızı"
+    class Config: title = "Red"
 
 
 class OptionBlue(Config):
@@ -122,39 +122,39 @@ class OptionBlue(Config):
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
-    class Config: title = "Mavi"
+    class Config: title = "Blue"
 
 
-class ColorSelectBox(Config):
-    name: Literal["ColorSelectBox"] = "ColorSelectBox"
+class ColorSelection(Config):
+    name: Literal["ColorSelection"] = "ColorSelection"
     value: List[Union[OptionRed, OptionBlue]]
     type: Literal["object"] = "object"
     field: Literal["selectBox"] = "selectBox"
 
-    class Config: title = "Renk Seçimi"
+    class Config: title = "Color Selection"
 
 
-# Ana Seçenekler (Dependent'ın opsiyonları)
+# Ana Seçenekler
 class OptionBasic(Config):
     name: Literal["optionBasic"] = "optionBasic"
-    thresholdValue: ThresholdValue  # Field 1
-    featureToggle: FeatureToggle  # Field 2
+    thresholdValue: ThresholdValue
+    featureToggle: FeatureToggle
     value: Literal["Basic"] = "Basic"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
-    class Config: title = "Temel Mod"
+    class Config: title = "Basic Mode"
 
 
 class OptionAdvanced(Config):
     name: Literal["optionAdvanced"] = "optionAdvanced"
-    sensitivityValue: SensitivityValue  # Field 1
-    colorSelectBox: ColorSelectBox  # Field 2
+    sensitivityValue: SensitivityValue
+    colorSelection: ColorSelection
     value: Literal["Advanced"] = "Advanced"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
-    class Config: title = "Gelişmiş Mod"
+    class Config: title = "Advanced Mode"
 
 
 class ConfigMode(Config):
@@ -163,10 +163,10 @@ class ConfigMode(Config):
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
 
-    class Config: title = "Çalışma Modu"
+    class Config: title = "Working Mode"
 
 
-# --- 3. EXECUTOR 1: Compare (1 Input, 1 Output) ---
+# --- 3. EXECUTOR 1: Compare ---
 class CompareInputs(Inputs):
     inputImage: InputImage
 
@@ -180,10 +180,12 @@ class CompareOutputs(Outputs):
 
 
 class CompareRequest(Request):
-    inputs: Optional[CompareInputs]
+    inputs: Optional[CompareInputs] = None  # ZORUNLU: Pydantic çökmesini engeller
     configs: CompareConfigs
 
-    class Config: schema_extra = {"target": "configs"}
+    class Config:
+        json_schema_extra = {"target": "configs"}
+        schema_extra = {"target": "configs"}  # Platformun Pydantic versiyonuna karşı çift güvenlik
 
 
 class CompareResponse(Response):
@@ -197,11 +199,12 @@ class Compare(Config):
     field: Literal["option"] = "option"
 
     class Config:
-        title = "Karşılaştırma (Compare)"
+        title = "Compare Task"
+        json_schema_extra = {"target": {"value": 0}}
         schema_extra = {"target": {"value": 0}}
 
 
-# --- 4. EXECUTOR 2: Filter (2 Inputs, 2 Outputs) ---
+# --- 4. EXECUTOR 2: Filter ---
 class FilterInputs(Inputs):
     inputImage: InputImage
     inputDetections: InputDetections
@@ -217,10 +220,12 @@ class FilterOutputs(Outputs):
 
 
 class FilterRequest(Request):
-    inputs: Optional[FilterInputs]
+    inputs: Optional[FilterInputs] = None  # ZORUNLU: Pydantic çökmesini engeller
     configs: FilterConfigs
 
-    class Config: schema_extra = {"target": "configs"}
+    class Config:
+        json_schema_extra = {"target": "configs"}
+        schema_extra = {"target": "configs"}
 
 
 class FilterResponse(Response):
@@ -234,7 +239,8 @@ class Filter(Config):
     field: Literal["option"] = "option"
 
     class Config:
-        title = "Filtreleme (Filter)"
+        title = "Filter Task"
+        json_schema_extra = {"target": {"value": 0}}
         schema_extra = {"target": {"value": 0}}
 
 
@@ -245,7 +251,9 @@ class ConfigExecutor(Config):
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
 
-    class Config: title = "Görev Seçimi"
+    class Config:
+        title = "Task"
+        # Birden fazla executor olduğunda target KESİNLİKLE yazılmaz (Markdown kuralı)
 
 
 class PackageConfigs(Configs):
