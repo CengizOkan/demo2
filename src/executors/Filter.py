@@ -5,30 +5,29 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
 
 from sdks.novavision.src.base.component import Component
 from sdks.novavision.src.helper.executor import Executor
-from components.DemoPackage.src.models.PackageModel import PackageModel
 from components.DemoPackage.src.utils.response import build_filter_response
+from components.DemoPackage.src.models.PackageModel import PackageModel
 
 
 class Filter(Component):
     def __init__(self, request, bootstrap):
-        # KRİTİK DÜZELTME: Component sadece request alır!
-        super().__init__(request)
-
-        # Bootstrap verisini kendimiz class'a dahil ediyoruz
-        self.bootstrap_data = bootstrap
-
+        super().__init__(request, bootstrap)
         self.request.model = PackageModel(**(self.request.data))
-        self.input_image = self.request.get_param("inputImageOne")
+
+        # 2 Input alınıyor
+        self.input_image = self.request.get_param("inputImage")
+        self.input_detections = self.request.get_param("inputDetections")
 
     @staticmethod
     def bootstrap(config: dict) -> dict:
         return {}
 
     def run(self):
-        # Platformu test etmek için şimdilik bypass
+        # İşlem mantığı
         self.output_image = self.input_image
+        self.output_detections = self.input_detections
         return build_filter_response(context=self)
 
 
-if __name__ == "__main__":
+if "__main__" == __name__:
     Executor(sys.argv[1]).run()
