@@ -6,7 +6,7 @@ from sdks.novavision.src.base.model import (
     Output, Input, Config
 )
 
-# --- 1. GİRİŞ/ÇIKIŞ TANIMLARI ---
+# --- 1. GİRİŞ/ÇIKIŞ ---
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
     value: Optional[Union[List[Image], Image]] = None
@@ -37,13 +37,13 @@ class OutputDetections(Output):
     type: str = "object"
     class Config: title = "Çıkış Tespitleri"
 
-# --- 2. KONFİGÜRASYON PARAMETRELERİ (Trello Şartları) ---
+# --- 2. KONFİGÜRASYON (Trello Şartı: 2 Seçenek, Her Biri 2 Tip) ---
 class ThresholdValue(Config):
     name: Literal["ThresholdValue"] = "ThresholdValue"
     value: float = Field(default=0.5, ge=0.0, le=1.0)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Bulanıklık Oranı"
+    class Config: title = "Bulanıklık"
 
 class OptionEnable(Config):
     name: Literal["optionEnable"] = "optionEnable"
@@ -61,6 +61,7 @@ class DependentDrop(Config):
 
 class ConfigMode(Config):
     name: Literal["ConfigMode"] = "ConfigMode"
+    # Alan 1: textInput, Alan 2: dropdownlist
     thresholdValue: ThresholdValue
     dependentDrop: DependentDrop
     value: Literal["Basic"] = "Basic"
@@ -73,24 +74,18 @@ class AdvancedKernel(Config):
     value: int = Field(default=21, ge=1, le=99)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Kernel Boyutu"
+    class Config: title = "Kernel"
 
-class AdvancedMethod(Config):
+class AdvancedAlgo(Config):
     name: Literal["Gaussian"] = "Gaussian"
     value: Literal["Gaussian"] = "Gaussian"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
     class Config: title = "Gaussian"
 
-class AdvancedAlgo(Config):
-    name: Literal["AdvancedAlgo"] = "AdvancedAlgo"
-    value: Union[AdvancedMethod] = Field(default_factory=AdvancedMethod)
-    type: Literal["object"] = "object"
-    field: Literal["dropdownlist"] = "dropdownlist"
-    class Config: title = "Algoritma Seçimi"
-
 class ConfigAdvanced(Config):
     name: Literal["ConfigAdvanced"] = "ConfigAdvanced"
+    # Alan 1: textInput, Alan 2: option
     kernel: AdvancedKernel
     algo: AdvancedAlgo
     value: Literal["Advanced"] = "Advanced"
@@ -103,29 +98,24 @@ class MainConfig(Config):
     value: Union[ConfigMode, ConfigAdvanced] = Field(default_factory=ConfigMode)
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Çalışma Modu"
+    class Config: title = "Mod Seçimi"
 
-# --- 3. EXECUTOR 1: Compare ---
+# --- 3. EXECUTOR REQUEST/RESPONSE ---
 class CompareInputs(Inputs):
     inputImage: InputImage
-
 class CompareConfigs(Configs):
     mainConfig: MainConfig
     value: str = "Configs"
     type: Literal["object"] = "object"
     field: Literal["config"] = "config"
-
 class CompareOutputs(Outputs):
     outputImage: OutputImage
-
 class CompareRequest(Request):
     inputs: Optional[CompareInputs] = None
-    configs: CompareConfigs # Artık yukarıda tanımlı olduğu için hata vermez
+    configs: CompareConfigs
     class Config: json_schema_extra = {"target": "configs"}
-
 class CompareResponse(Response):
     outputs: CompareOutputs
-
 class Compare(Config):
     name: Literal["Compare"] = "Compare"
     value: Union[CompareRequest, CompareResponse] = Field(default_factory=CompareRequest)
@@ -135,29 +125,23 @@ class Compare(Config):
         title = "Resim Karşılaştırma"
         json_schema_extra = {"target": {"value": 0}}
 
-# --- 4. EXECUTOR 2: Filter ---
 class FilterInputs(Inputs):
     inputImage: InputImage
     inputDetections: InputDetections
-
 class FilterConfigs(Configs):
     mainConfig: MainConfig
     value: str = "Configs"
     type: Literal["object"] = "object"
     field: Literal["config"] = "config"
-
 class FilterOutputs(Outputs):
     outputImage: OutputImage
     outputDetections: OutputDetections
-
 class FilterRequest(Request):
     inputs: Optional[FilterInputs] = None
-    configs: FilterConfigs # Artık yukarıda tanımlı olduğu için hata vermez
+    configs: FilterConfigs
     class Config: json_schema_extra = {"target": "configs"}
-
 class FilterResponse(Response):
     outputs: FilterOutputs
-
 class Filter(Config):
     name: Literal["Filter"] = "Filter"
     value: Union[FilterRequest, FilterResponse] = Field(default_factory=FilterRequest)
@@ -167,7 +151,7 @@ class Filter(Config):
         title = "Resim Filtreleme"
         json_schema_extra = {"target": {"value": 0}}
 
-# --- 5. PAKET KÖK TANIMI ---
+# --- 4. PAKET KÖK ---
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
     value: Union[Compare, Filter] = Field(default_factory=Compare)
