@@ -6,7 +6,6 @@ from sdks.novavision.src.base.model import (
     Output, Input, Config
 )
 
-# --- GİRİŞ VE ÇIKIŞLAR ---
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
     value: Optional[Union[List[Image], Image]] = None
@@ -107,14 +106,26 @@ class ConfigMode(Config):
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
     class Config: title = "Çalışma Modu"
 
-# --- EXECUTOR 1: Compare ---
+# --- GİZLİ WRAPPER ALANLARI (Flow Engine İçin Kritik) ---
 class CompareInputs(Inputs):
+    name: Literal["Inputs"] = "Inputs"
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
     inputImage: Optional[InputImage] = None
 
 class CompareConfigs(Configs):
-    configMode: Optional[ConfigMode] = None
+    name: Literal["Configs"] = "Configs"
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
+    mainConfig: Optional[ConfigMode] = None
 
 class CompareOutputs(Outputs):
+    name: Literal["Outputs"] = "Outputs"
+    value: str = "Outputs"
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
     outputImage: Optional[OutputImage] = None
 
 class CompareRequest(Request):
@@ -134,15 +145,26 @@ class Compare(Config):
         title = "Compare Executor"
         json_schema_extra = {"target": {"value": 0}}
 
-# --- EXECUTOR 2: Filter ---
 class FilterInputs(Inputs):
+    name: Literal["Inputs"] = "Inputs"
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
     inputImage: Optional[InputImage] = None
     inputDetections: Optional[InputDetections] = None
 
 class FilterConfigs(Configs):
-    configMode: Optional[ConfigMode] = None
+    name: Literal["Configs"] = "Configs"
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
+    mainConfig: Optional[ConfigMode] = None
 
 class FilterOutputs(Outputs):
+    name: Literal["Outputs"] = "Outputs"
+    value: str = "Outputs"
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
     outputImage: Optional[OutputImage] = None
     outputDetections: Optional[OutputDetections] = None
 
@@ -172,6 +194,10 @@ class ConfigExecutor(Config):
     class Config: title = "Task"
 
 class PackageConfigs(Configs):
+    name: Literal["Configs"] = "Configs"
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
     executor: Optional[ConfigExecutor] = None
 
 class PackageModel(Package):
