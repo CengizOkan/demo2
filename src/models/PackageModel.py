@@ -37,20 +37,20 @@ class OutputDetections(Output):
     type: str = "object"
     class Config: title = "Output Detections"
 
-# --- 2. CONFIGURATION PARAMETERS ---
+# --- 2. CONFIGURATION ---
 class BlurThreshold(Config):
     name: Literal["BlurThreshold"] = "BlurThreshold"
     value: float = Field(default=0.5, ge=0.0, le=1.0)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Blur Intensity"
+    class Config: title = "Blur Threshold"
 
 class FeatureOption(Config):
     name: Literal["featureOption"] = "featureOption"
     value: Literal["Active"] = "Active"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
-    class Config: title = "Status"
+    class Config: title = "Feature Status"
 
 class ConfigMode(Config):
     name: Literal["ConfigMode"] = "ConfigMode"
@@ -73,7 +73,7 @@ class AlgoDropdown(Config):
     value: Literal["Gaussian"] = "Gaussian"
     type: Literal["string"] = "string"
     field: Literal["option", "dropdownlist"] = "option"
-    class Config: title = "Gaussian Blur"
+    class Config: title = "Gaussian"
 
 class ConfigAdvanced(Config):
     name: Literal["ConfigAdvanced"] = "ConfigAdvanced"
@@ -94,62 +94,52 @@ class MainConfig(Config):
 # --- 3. EXECUTOR SCHEMAS ---
 class CompareInputs(Inputs):
     inputImage: InputImage
-
 class CompareConfigs(Configs):
     mainConfig: MainConfig
     value: str = "Configs"
     type: Literal["object"] = "object"
     field: Literal["config"] = "config"
-
 class CompareOutputs(Outputs):
     outputImage: OutputImage
-
 class CompareRequest(Request):
     inputs: Optional[CompareInputs] = None
     configs: CompareConfigs
     class Config: json_schema_extra = {"target": "configs"}
-
 class CompareResponse(Response):
     outputs: CompareOutputs
-
 class Compare(Config):
     name: Literal["Compare"] = "Compare"
     value: Union[CompareRequest, CompareResponse] = Field(default_factory=CompareRequest)
     type: Literal["object"] = "object"
     field: Literal["option", "dropdownlist"] = "option"
     class Config:
-        title = "Compare Executor"
+        title = "Compare"
         json_schema_extra = {"target": {"value": 0}}
 
 class FilterInputs(Inputs):
     inputImage: InputImage
     inputDetections: Optional[InputDetections] = None
-
 class FilterConfigs(Configs):
     mainConfig: MainConfig
     value: str = "Configs"
     type: Literal["object"] = "object"
     field: Literal["config"] = "config"
-
 class FilterOutputs(Outputs):
     outputImage: OutputImage
     outputDetections: Optional[OutputDetections] = None
-
 class FilterRequest(Request):
     inputs: Optional[FilterInputs] = None
     configs: FilterConfigs
     class Config: json_schema_extra = {"target": "configs"}
-
 class FilterResponse(Response):
     outputs: FilterOutputs
-
 class Filter(Config):
     name: Literal["Filter"] = "Filter"
     value: Union[FilterRequest, FilterResponse] = Field(default_factory=FilterRequest)
     type: Literal["object"] = "object"
     field: Literal["option", "dropdownlist"] = "option"
     class Config:
-        title = "Filter Executor"
+        title = "Filter"
         json_schema_extra = {"target": {"value": 0}}
 
 class ConfigExecutor(Config):
@@ -157,7 +147,7 @@ class ConfigExecutor(Config):
     value: Union[Compare, Filter] = Field(default_factory=Compare)
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist", "dropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Task Selection"
+    class Config: title = "Task"
 
 class PackageConfigs(Configs):
     executor: ConfigExecutor
