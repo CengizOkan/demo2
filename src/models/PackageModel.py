@@ -37,7 +37,7 @@ class OutputDetections(Output):
     type: str = "object"
     class Config: title = "Çıkış Tespitleri"
 
-# --- 2. KONFİGÜRASYON (Trello: 2 Seçenek, Her Biri 2 Tip) ---
+# --- 2. KONFİGÜRASYON (UI İle Birebir Eşleşen İsimler) ---
 class BlurThreshold(Config):
     name: Literal["BlurThreshold"] = "BlurThreshold"
     value: float = Field(default=0.5, ge=0.0, le=1.0)
@@ -52,9 +52,9 @@ class FeatureOption(Config):
     field: Literal["option"] = "option"
     class Config: title = "Özellik Durumu"
 
-class ConfigModeBasic(Config):
-    name: Literal["ConfigModeBasic"] = "ConfigModeBasic"
-    # Alan 1: textInput, Alan 2: option
+class ConfigMode(Config):
+    # DÜZELTME: UI'ın beklediği orijinal isim "ConfigMode" olarak geri alındı
+    name: Literal["ConfigMode"] = "ConfigMode"
     blurThreshold: BlurThreshold
     featureOption: FeatureOption
     value: Literal["Basic"] = "Basic"
@@ -76,9 +76,9 @@ class AlgoDropdown(Config):
     field: Literal["option"] = "option"
     class Config: title = "Gaussian"
 
-class ConfigModeAdvanced(Config):
-    name: Literal["ConfigModeAdvanced"] = "ConfigModeAdvanced"
-    # Alan 1: textInput, Alan 2: dropdownlist
+class ConfigAdvanced(Config):
+    # DÜZELTME: UI'ın beklediği orijinal isim "ConfigAdvanced" olarak geri alındı
+    name: Literal["ConfigAdvanced"] = "ConfigAdvanced"
     kernel: AdvancedKernel
     algo: Union[AlgoDropdown] = Field(default_factory=AlgoDropdown)
     value: Literal["Advanced"] = "Advanced"
@@ -88,7 +88,7 @@ class ConfigModeAdvanced(Config):
 
 class MainConfig(Config):
     name: Literal["MainConfig"] = "MainConfig"
-    value: Union[ConfigModeBasic, ConfigModeAdvanced] = Field(default_factory=ConfigModeBasic)
+    value: Union[ConfigMode, ConfigAdvanced] = Field(default_factory=ConfigMode)
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
     class Config: title = "İşlem Modu"
