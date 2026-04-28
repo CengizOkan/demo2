@@ -1,7 +1,6 @@
 import os
 import sys
 import cv2
-import numpy as np
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
 
@@ -15,61 +14,36 @@ from components.DemoPackage.src.models.PackageModel import PackageModel
 class Compare(Component):
     def __init__(self, request, bootstrap):
         super().__init__(request, bootstrap)
-        try:
-            self.request.model = PackageModel(**(self.request.data))
-        except:
-            pass
+        # Try-except kaldırıldı; model hatalıysa başlatma sırasında hata vermelidir.
+        self.request.model = PackageModel(**(self.request.data))
+        self.input_image = self.request.get_param("inputImage")
 
     @staticmethod
     def bootstrap(config: dict) -> dict:
         return {}
 
     def run(self):
-        # 1. Görüntüyü Yakala (İsimden bağımsız)
-        def find_img(d):
-            if isinstance(d, dict):
-                if "encoding" in d and "value" in d: return d
-                for k, v in d.items():
-                    res = find_img(v)
-                    if res: return res
-            elif isinstance(d, list):
-                for i in d:
-                    res = find_img(i)
-                    if res: return res
-            return None
+        # Redis'ten matris olarak çek (image_shape hatasını SDK çözer)
+        img_np = SDKImage.get_frame(img=self.input_image, redis_db=self.redis_db)
 
-        img_dict = find_img(self.request.data)
-
-        if img_dict:
-            # 2. REDIS'I BYPASS ET: Doğrudan Base64'ten çöz
-            cv_img = SDKImage.decode64(img_dict)
-
-            # 3. Blur Şiddetini Config'den Al
-            try:
-                conf = self.request.model.configs.executor.value.value.configs.mainConfig.value
-                if conf.name == "ConfigMode":
-                    k = int(conf.thresholdValue.value * 40) + 1
-                else:
-                    k = int(conf.kernel.value)
-            except:
-                k = 15  # Hata durumunda varsayılan
+        if img_np is not None:
+            # Konfigürasyonu al
+            conf = self.request.model.configs.executor.value.value.configs.mainConfig.value
+            k = 15
+            if conf.name == "ConfigModeBasic":
+                k = int(conf.blurThreshold.value * 30) + 1
+            else:
+                k = int(conf.kernel.value)
 
             if k % 2 == 0: k += 1
 
-            # Filtreyi Uygula
-            processed = cv2.GaussianBlur(cv_img, (k, k), 0)
+            # Görüntü işleme
+            processed = cv2.GaussianBlur(img_np, (k, k), 0)
 
-            # 4. REDIS'I BYPASS ET: Doğrudan Base64 olarak paketle
-            mime = img_dict.get("mime_type", "image/jpeg")
-            # ImageModel formatında dict oluşturuyoruz (Redis set_frame yerine)
-            self.output_image = {
-                "uID": img_dict.get("uID", "demo-uid"),
-                "mime_type": mime,
-                "encoding": "base64",
-                "value": SDKImage.encode64(processed, mime)["value"]
-            }
+            # Redis'e geri yaz ve uID içeren objeyi al
+            self.output_image = SDKImage.set_frame(img=processed, package_uID=self.uID, redis_db=self.redis_db)
         else:
-            self.output_image = None
+            self.output_image = self.input_image
 
         return build_compare_response(context=self)
 
