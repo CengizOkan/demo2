@@ -6,7 +6,7 @@ from sdks.novavision.src.base.model import (
     Output, Input, Config
 )
 
-# --- 1. GİRİŞ VE ÇIKIŞLAR ---
+# --- 1. INPUTS AND OUTPUTS ---
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
     value: Optional[Union[List[Image], Image]] = None
@@ -14,13 +14,13 @@ class InputImage(Input):
     @validator("type", pre=True, always=True)
     def set_type(cls, v, values):
         return "list" if isinstance(values.get('value'), list) else "object"
-    class Config: title = "Giriş Resmi"
+    class Config: title = "Input Image"
 
 class InputDetections(Input):
     name: Literal["inputDetections"] = "inputDetections"
     value: Optional[Union[List[Detection], Detection]] = None
     type: str = "object"
-    class Config: title = "Giriş Tespitleri"
+    class Config: title = "Input Detections"
 
 class OutputImage(Output):
     name: Literal["outputImage"] = "outputImage"
@@ -29,46 +29,44 @@ class OutputImage(Output):
     @validator("type", pre=True, always=True)
     def set_type(cls, v, values):
         return "list" if isinstance(values.get('value'), list) else "object"
-    class Config: title = "Çıkış Resmi"
+    class Config: title = "Output Image"
 
 class OutputDetections(Output):
     name: Literal["outputDetections"] = "outputDetections"
     value: Optional[Union[List[Detection], Detection]] = None
     type: str = "object"
-    class Config: title = "Çıkış Tespitleri"
+    class Config: title = "Output Detections"
 
-# --- 2. KONFİGÜRASYON (Arayüz Eksik Veri Gönderirse Çökmemesi İçin Optional Yapıldı) ---
+# --- 2. CONFIGURATION ---
 class BlurThreshold(Config):
     name: Literal["BlurThreshold"] = "BlurThreshold"
     value: float = Field(default=0.5, ge=0.0, le=1.0)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Bulanıklık Oranı"
+    class Config: title = "Blur Threshold"
 
 class FeatureOption(Config):
     name: Literal["featureOption"] = "featureOption"
     value: Literal["Active"] = "Active"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
-    class Config: title = "Özellik Durumu"
+    class Config: title = "Feature Status"
 
 class ConfigMode(Config):
     name: Literal["ConfigMode"] = "ConfigMode"
-    # HATANIN ÇÖZÜMÜ: Alanlar opsiyonel yapıldı
     blurThreshold: Optional[BlurThreshold] = None
     featureOption: Optional[FeatureOption] = None
     value: Literal["Basic"] = "Basic"
     type: Literal["string"] = "string"
-    # Arayüzün option yerine dropdownlist gönderme ihtimaline karşı tolerans
     field: Literal["option", "dropdownlist"] = "option"
-    class Config: title = "Temel Mod"
+    class Config: title = "Basic Mode"
 
 class AdvancedKernel(Config):
     name: Literal["AdvancedKernel"] = "AdvancedKernel"
     value: int = Field(default=21, ge=1, le=51)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Kernel Boyutu"
+    class Config: title = "Kernel Size"
 
 class AlgoDropdown(Config):
     name: Literal["Gaussian"] = "Gaussian"
@@ -79,22 +77,21 @@ class AlgoDropdown(Config):
 
 class ConfigAdvanced(Config):
     name: Literal["ConfigAdvanced"] = "ConfigAdvanced"
-    # HATANIN ÇÖZÜMÜ: Alanlar opsiyonel yapıldı
     kernel: Optional[AdvancedKernel] = None
     algo: Optional[Union[AlgoDropdown]] = None
     value: Literal["Advanced"] = "Advanced"
     type: Literal["string"] = "string"
     field: Literal["option", "dropdownlist"] = "option"
-    class Config: title = "Gelişmiş Mod"
+    class Config: title = "Advanced Mode"
 
 class MainConfig(Config):
     name: Literal["MainConfig"] = "MainConfig"
     value: Union[ConfigMode, ConfigAdvanced] = Field(default_factory=ConfigMode)
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist", "dropdownlist"] = "dependentDropdownlist"
-    class Config: title = "İşlem Modu"
+    class Config: title = "Operation Mode"
 
-# --- 3. EXECUTOR ŞEMALARI ---
+# --- 3. EXECUTOR SCHEMAS ---
 class CompareInputs(Inputs):
     inputImage: InputImage
 class CompareConfigs(Configs):
