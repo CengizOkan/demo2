@@ -37,7 +37,7 @@ class OutputDetections(Output):
     type: str = "object"
     class Config: title = "Çıkış Tespitleri"
 
-# --- 2. KONFİGÜRASYON (Trello Şartları: 2 Seçenek, Her Biri 2 Alan Tipi) ---
+# --- 2. KONFİGÜRASYON (Trello: 2 Seçenek, Her Biri 2 Alan) ---
 class ThresholdValue(Config):
     name: Literal["ThresholdValue"] = "ThresholdValue"
     value: float = Field(default=0.5, ge=0.0, le=1.0)
@@ -45,22 +45,30 @@ class ThresholdValue(Config):
     field: Literal["textInput"] = "textInput"
     class Config: title = "Bulanıklık Oranı"
 
-class FeatureStatus(Config):
+class OptionEnable(Config):
     name: Literal["optionEnable"] = "optionEnable"
     value: Literal["Enable"] = "Enable"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
-    class Config: title = "Aktiflik"
+    class Config: title = "Aktif"
+
+class DependentDrop(Config):
+    name: Literal["DependentDrop"] = "DependentDrop"
+    value: Union[OptionEnable] = Field(default_factory=OptionEnable)
+    type: Literal["object"] = "object"
+    field: Literal["dropdownlist"] = "dropdownlist"
+    class Config: title = "Durum"
 
 class ConfigMode(Config):
     name: Literal["ConfigMode"] = "ConfigMode"
-    threshold: ThresholdValue # Alan 1: textInput
-    status: FeatureStatus     # Alan 2: option
+    thresholdValue: ThresholdValue # Alan 1
+    dependentDrop: DependentDrop   # Alan 2
     value: Literal["Basic"] = "Basic"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
     class Config: title = "Temel Mod"
 
+# Gelişmiş Mod için 2 yeni alan eklendi
 class AdvancedKernel(Config):
     name: Literal["AdvancedKernel"] = "AdvancedKernel"
     value: int = Field(default=21, ge=1, le=99)
@@ -68,7 +76,7 @@ class AdvancedKernel(Config):
     field: Literal["textInput"] = "textInput"
     class Config: title = "Kernel Boyutu"
 
-class AlgoOption(Config):
+class AdvancedMethod(Config):
     name: Literal["Gaussian"] = "Gaussian"
     value: Literal["Gaussian"] = "Gaussian"
     type: Literal["string"] = "string"
@@ -77,15 +85,15 @@ class AlgoOption(Config):
 
 class AdvancedAlgo(Config):
     name: Literal["AdvancedAlgo"] = "AdvancedAlgo"
-    value: Union[AlgoOption] = Field(default_factory=AlgoOption)
+    value: Union[AdvancedMethod] = Field(default_factory=AdvancedMethod)
     type: Literal["object"] = "object"
     field: Literal["dropdownlist"] = "dropdownlist"
-    class Config: title = "Algoritma"
+    class Config: title = "Algoritma Seçimi"
 
 class ConfigAdvanced(Config):
     name: Literal["ConfigAdvanced"] = "ConfigAdvanced"
-    kernel: AdvancedKernel # Alan 1: textInput
-    algo: AdvancedAlgo     # Alan 2: dropdownlist
+    kernel: AdvancedKernel # Alan 1
+    algo: AdvancedAlgo     # Alan 2
     value: Literal["Advanced"] = "Advanced"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -98,89 +106,60 @@ class MainConfig(Config):
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
     class Config: title = "Çalışma Modu"
 
-# --- 3. EXECUTOR REQUEST/RESPONSE ---
+# --- 3. EXECUTOR YAPILARI ---
 class CompareInputs(Inputs):
     inputImage: InputImage
-    value: str = "Inputs"
-    type: Literal["object"] = "object"
-    field: Literal["input"] = "input"
-
+class CompareConfigs(Configs):
+    mainConfig: MainConfig
 class CompareOutputs(Outputs):
     outputImage: OutputImage
-    type: Literal["object"] = "object"
-    field: Literal["output"] = "output"
-
 class CompareRequest(Request):
     inputs: Optional[CompareInputs] = None
     configs: CompareConfigs
     class Config: json_schema_extra = {"target": "configs"}
-
-class CompareConfigs(Configs):
-    mainConfig: MainConfig
-    value: str = "Configs"
-    type: Literal["object"] = "object"
-    field: Literal["config"] = "config"
-
 class CompareResponse(Response):
     outputs: CompareOutputs
-
 class Compare(Config):
     name: Literal["Compare"] = "Compare"
-    value: Union[CompareRequest, CompareResponse]
+    value: Union[CompareRequest, CompareResponse] = Field(default_factory=CompareRequest)
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
     class Config:
-        title = "Resim Karşılaştırma"
+        title = "Compare"
         json_schema_extra = {"target": {"value": 0}}
 
 class FilterInputs(Inputs):
     inputImage: InputImage
     inputDetections: InputDetections
-    value: str = "Inputs"
-    type: Literal["object"] = "object"
-    field: Literal["input"] = "input"
-
+class FilterConfigs(Configs):
+    mainConfig: MainConfig
 class FilterOutputs(Outputs):
     outputImage: OutputImage
     outputDetections: OutputDetections
-    type: Literal["object"] = "object"
-    field: Literal["output"] = "output"
-
 class FilterRequest(Request):
     inputs: Optional[FilterInputs] = None
     configs: FilterConfigs
     class Config: json_schema_extra = {"target": "configs"}
-
-class FilterConfigs(Configs):
-    mainConfig: MainConfig
-    value: str = "Configs"
-    type: Literal["object"] = "object"
-    field: Literal["config"] = "config"
-
 class FilterResponse(Response):
     outputs: FilterOutputs
-
 class Filter(Config):
     name: Literal["Filter"] = "Filter"
-    value: Union[FilterRequest, FilterResponse]
+    value: Union[FilterRequest, FilterResponse] = Field(default_factory=FilterRequest)
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
     class Config:
-        title = "Resim Filtreleme"
+        title = "Filter"
         json_schema_extra = {"target": {"value": 0}}
 
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
-    value: Union[Compare, Filter]
+    value: Union[Compare, Filter] = Field(default_factory=Compare)
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Görev"
+    class Config: title = "Task"
 
 class PackageConfigs(Configs):
     executor: ConfigExecutor
-    value: str = "Configs"
-    type: Literal["object"] = "object"
-    field: Literal["config"] = "config"
 
 class PackageModel(Package):
     configs: PackageConfigs
