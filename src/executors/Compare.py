@@ -14,7 +14,6 @@ from components.DemoPackage.src.models.PackageModel import PackageModel
 class Compare(Component):
     def __init__(self, request, bootstrap):
         super().__init__(request, bootstrap)
-        # Try-except kaldırıldı; model hatalıysa başlatma sırasında hata vermelidir.
         self.request.model = PackageModel(**(self.request.data))
         self.input_image = self.request.get_param("inputImage")
 
@@ -23,11 +22,13 @@ class Compare(Component):
         return {}
 
     def run(self):
-        # Redis'ten matris olarak çek (image_shape hatasını SDK çözer)
-        img_np = SDKImage.get_frame(img=self.input_image, redis_db=self.redis_db)
+        # 1. SDK ile resmi çekiyoruz (Gelen şey bir Image objesidir)
+        img = SDKImage.get_frame(img=self.input_image, redis_db=self.redis_db)
 
-        if img_np is not None:
-            # Konfigürasyonu al
+        # 2. Objenin ve içindeki saf görüntü matrisinin (value) dolu olduğundan emin ol
+        if img is not None and img.value is not None:
+            cv_img = img.value  # OpenCV'nin beklediği saf Numpy matrisi
+
             conf = self.request.model.configs.executor.value.value.configs.mainConfig.value
             k = 15
             if conf.name == "ConfigModeBasic":
@@ -37,11 +38,14 @@ class Compare(Component):
 
             if k % 2 == 0: k += 1
 
-            # Görüntü işleme
-            processed = cv2.GaussianBlur(img_np, (k, k), 0)
+            # OpenCV işlemini saf matris (cv_img) üzerinde yap
+            processed = cv2.GaussianBlur(cv_img, (k, k), 0)
 
-            # Redis'e geri yaz ve uID içeren objeyi al
-            self.output_image = SDKImage.set_frame(img=processed, package_uID=self.uID, redis_db=self.redis_db)
+            # 3. İşlenmiş matrisi tekrar Image objesinin içine koy
+            img.value = processed
+
+            # 4. Güncellenmiş objeyi Redis'e kaydet
+            self.output_image = SDKImage.set_frame(img=img, package_uID=self.uID, redis_db=self.redis_db)
         else:
             self.output_image = self.input_image
 

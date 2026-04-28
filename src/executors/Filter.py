@@ -19,13 +19,22 @@ class Filter(Component):
         self.input_detections = self.request.get_param("inputDetections") or []
 
     def run(self):
-        img_np = SDKImage.get_frame(img=self.input_image, redis_db=self.redis_db)
+        # 1. Obje olarak çek
+        img = SDKImage.get_frame(img=self.input_image, redis_db=self.redis_db)
 
-        if img_np is not None:
-            # Siyah-Beyaz filtre (Görsel kanıt için)
-            gray = cv2.cvtColor(img_np, cv2.COLOR_BGR2GRAY)
+        # 2. Saf matrisi çıkar
+        if img is not None and img.value is not None:
+            cv_img = img.value
+
+            # OpenCV işlemleri
+            gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
             processed = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-            self.output_image = SDKImage.set_frame(img=processed, package_uID=self.uID, redis_db=self.redis_db)
+
+            # 3. Matrisi objeye geri yükle
+            img.value = processed
+
+            # 4. Redis'e gönder
+            self.output_image = SDKImage.set_frame(img=img, package_uID=self.uID, redis_db=self.redis_db)
         else:
             self.output_image = self.input_image
 
