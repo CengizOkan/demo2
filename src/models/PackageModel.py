@@ -6,9 +6,7 @@ from sdks.novavision.src.base.model import (
     Output, Input, Config
 )
 
-
 # --- 1. GİRİŞ/ÇIKIŞ TANIMLARI ---
-# Portlara veri bağlanmama ihtimaline karşı value ve class atamaları Optional yapıldı.
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
     value: Optional[Union[List[Image], Image]] = None
@@ -16,12 +14,8 @@ class InputImage(Input):
 
     @validator("type", pre=True, always=True)
     def set_type_based_on_value(cls, value, values):
-        val = values.get('value')
-        if isinstance(val, Image):
-            return "object"
-        elif isinstance(val, list):
-            return "list"
-        return "object"
+        val = values.get('value') if isinstance(values, dict) else getattr(values, 'value', None)
+        return "object" if isinstance(val, Image) else "list"
 
     class Config: title = "Input Image"
 
@@ -41,12 +35,8 @@ class OutputImage(Output):
 
     @validator("type", pre=True, always=True)
     def set_type_based_on_value(cls, value, values):
-        val = values.get('value')
-        if isinstance(val, Image):
-            return "object"
-        elif isinstance(val, list):
-            return "list"
-        return "object"
+        val = values.get('value') if isinstance(values, dict) else getattr(values, 'value', None)
+        return "object" if isinstance(val, Image) else "list"
 
     class Config: title = "Output Image"
 
@@ -59,75 +49,46 @@ class OutputDetections(Output):
     class Config: title = "Output Detections"
 
 
-# --- 2. DEPENDENT DROPDOWN KONFİGÜRASYONU ---
-class ThresholdValue(Config):
-    name: Literal["ThresholdValue"] = "ThresholdValue"
-    value: float = Field(default=0.5, ge=0.0, le=1.0)
-    type: Literal["number"] = "number"
-    field: Literal["textInput"] = "textInput"
-
-    class Config: title = "Threshold"
-
-
-class OptionEnable(Config):
-    name: Literal["optionEnable"] = "optionEnable"
-    value: Literal["Enable"] = "Enable"
+# --- 2. DROPDOWN KONFİGÜRASYONU (UI'a Uygun Hale Getirildi) ---
+class OptionBlur(Config):
+    name: Literal["Blur"] = "Blur"
+    value: Literal["Blur"] = "Blur"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
-    class Config: title = "Enable"
+    class Config: title = "Blur"
 
 
-class OptionDisable(Config):
-    name: Literal["optionDisable"] = "optionDisable"
-    value: Literal["Disable"] = "Disable"
+class OptionSharpen(Config):
+    name: Literal["Sharpen"] = "Sharpen"
+    value: Literal["Sharpen"] = "Sharpen"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
-    class Config: title = "Disable"
+    class Config: title = "Sharpen"
 
 
-class DependentDrop(Config):
-    name: Literal["DependentDrop"] = "DependentDrop"
-    value: Union[OptionEnable, OptionDisable]
-    type: Literal["object"] = "object"
-    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-
-    class Config: title = "Feature Status"
-
-
-class ConfigMode(Config):
-    name: Literal["ConfigMode"] = "ConfigMode"
-    thresholdValue: ThresholdValue
-    dependentDrop: DependentDrop
-    value: Literal["Basic"] = "Basic"
+class OptionGrayscale(Config):
+    name: Literal["Grayscale"] = "Grayscale"
+    value: Literal["Grayscale"] = "Grayscale"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
-    class Config: title = "Temel Mod"
+    class Config: title = "Grayscale"
 
 
-class ConfigAdvanced(Config):
-    name: Literal["ConfigAdvanced"] = "ConfigAdvanced"
-    value: Literal["Advanced"] = "Advanced"
-    type: Literal["string"] = "string"
-    field: Literal["option"] = "option"
-
-    class Config: title = "Gelişmiş Mod"
-
-# UI'dan gelen JSON ile eşleşmesi için ismi "configFilterType" olarak güncellendi
 class ConfigFilterType(Config):
-    name: Literal["configFilterType"] = "configFilterType"
-    value: Union[ConfigMode, ConfigAdvanced]
+    # UI tarafından PascalCase (ConfigFilterType) gönderildiği için Literal düzeltildi
+    name: Literal["ConfigFilterType"] = "ConfigFilterType"
+    value: Union[OptionBlur, OptionSharpen, OptionGrayscale] = Field(default_factory=OptionBlur)
     type: Literal["object"] = "object"
-    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
+    field: Literal["dropdownlist"] = "dropdownlist"
 
-    class Config: title = "Çalışma Modu"
+    class Config: title = "Filtre Tipi"
 
 
 # --- 3. EXECUTOR 1: Compare ---
 class CompareInputs(Inputs):
-    # Port boş bırakılabilir
     inputImage: Optional[InputImage] = None
     value: str = "Inputs"
     type: Literal["object"] = "object"
@@ -135,7 +96,6 @@ class CompareInputs(Inputs):
 
 
 class CompareConfigs(Configs):
-    # UI'daki isme uyumlu Config
     configFilterType: ConfigFilterType
     value: str = "Configs"
     type: Literal["object"] = "object"
@@ -172,7 +132,6 @@ class Compare(Config):
 
 # --- 4. EXECUTOR 2: Filter ---
 class FilterInputs(Inputs):
-    # Portlar boş bırakılabilir
     inputImage: Optional[InputImage] = None
     inputDetections: Optional[InputDetections] = None
     value: str = "Inputs"
@@ -181,7 +140,6 @@ class FilterInputs(Inputs):
 
 
 class FilterConfigs(Configs):
-    # UI'daki isme uyumlu Config
     configFilterType: ConfigFilterType
     value: str = "Configs"
     type: Literal["object"] = "object"
