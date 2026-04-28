@@ -11,81 +11,81 @@ class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
     value: Optional[Union[List[Image], Image]] = None
     type: str = "object"
-
     @validator("type", pre=True, always=True)
-    def set_type_based_on_value(cls, v, values):
-        val = values.get('value')
-        return "list" if isinstance(val, list) else "object"
-
-    class Config: title = "Input Image"
+    def set_type(cls, v, values):
+        return "list" if isinstance(values.get('value'), list) else "object"
+    class Config: title = "Giriş Resmi"
 
 class InputDetections(Input):
     name: Literal["inputDetections"] = "inputDetections"
     value: Optional[Union[List[Detection], Detection]] = None
     type: str = "object"
-    class Config: title = "Input Detections"
+    class Config: title = "Giriş Tespitleri"
 
 class OutputImage(Output):
     name: Literal["outputImage"] = "outputImage"
     value: Optional[Union[List[Image], Image]] = None
     type: str = "object"
-
     @validator("type", pre=True, always=True)
-    def set_type_based_on_value(cls, v, values):
-        val = values.get('value')
-        return "list" if isinstance(val, list) else "object"
-    class Config: title = "Output Image"
+    def set_type(cls, v, values):
+        return "list" if isinstance(values.get('value'), list) else "object"
+    class Config: title = "Çıkış Resmi"
 
 class OutputDetections(Output):
     name: Literal["outputDetections"] = "outputDetections"
     value: Optional[Union[List[Detection], Detection]] = None
     type: str = "object"
-    class Config: title = "Output Detections"
+    class Config: title = "Çıkış Tespitleri"
 
-# --- 2. DEPENDENT DROPDOWN KONFİGÜRASYONU (Trello Şartı) ---
+# --- 2. KONFİGÜRASYON (Trello Şartları: 2 Seçenek, Her Biri 2 Alan Tipi) ---
 class ThresholdValue(Config):
     name: Literal["ThresholdValue"] = "ThresholdValue"
     value: float = Field(default=0.5, ge=0.0, le=1.0)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Blur Şiddeti"
+    class Config: title = "Bulanıklık Oranı"
 
 class FeatureStatus(Config):
     name: Literal["optionEnable"] = "optionEnable"
     value: Literal["Enable"] = "Enable"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
-    class Config: title = "Aktif"
+    class Config: title = "Aktiflik"
 
 class ConfigMode(Config):
     name: Literal["ConfigMode"] = "ConfigMode"
-    # Alan 1: textInput, Alan 2: option
-    thresholdValue: ThresholdValue
-    featureStatus: FeatureStatus
+    threshold: ThresholdValue # Alan 1: textInput
+    status: FeatureStatus     # Alan 2: option
     value: Literal["Basic"] = "Basic"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
     class Config: title = "Temel Mod"
 
-class AdvancedKernelSize(Config):
-    name: Literal["AdvancedKernelSize"] = "AdvancedKernelSize"
-    value: int = Field(default=15, ge=1, le=51)
+class AdvancedKernel(Config):
+    name: Literal["AdvancedKernel"] = "AdvancedKernel"
+    value: int = Field(default=21, ge=1, le=99)
     type: Literal["number"] = "number"
     field: Literal["textInput"] = "textInput"
-    class Config: title = "Kernel Boyutu (Tek Sayı)"
+    class Config: title = "Kernel Boyutu"
 
-class AdvancedMethod(Config):
+class AlgoOption(Config):
     name: Literal["Gaussian"] = "Gaussian"
     value: Literal["Gaussian"] = "Gaussian"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
-    class Config: title = "Gaussian Blur"
+    class Config: title = "Gaussian"
+
+class AdvancedAlgo(Config):
+    name: Literal["AdvancedAlgo"] = "AdvancedAlgo"
+    value: Union[AlgoOption] = Field(default_factory=AlgoOption)
+    type: Literal["object"] = "object"
+    field: Literal["dropdownlist"] = "dropdownlist"
+    class Config: title = "Algoritma"
 
 class ConfigAdvanced(Config):
     name: Literal["ConfigAdvanced"] = "ConfigAdvanced"
-    # Alan 1: textInput, Alan 2: dropdownlist (Trello Şartı Sağlandı)
-    advancedKernel: AdvancedKernelSize
-    advancedMethod: Union[AdvancedMethod] = Field(default_factory=AdvancedMethod)
+    kernel: AdvancedKernel # Alan 1: textInput
+    algo: AdvancedAlgo     # Alan 2: dropdownlist
     value: Literal["Advanced"] = "Advanced"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -96,51 +96,77 @@ class MainConfig(Config):
     value: Union[ConfigMode, ConfigAdvanced] = Field(default_factory=ConfigMode)
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "İşlem Modu"
+    class Config: title = "Çalışma Modu"
 
-# --- 3. EXECUTOR TANIMLARI ---
+# --- 3. EXECUTOR REQUEST/RESPONSE ---
 class CompareInputs(Inputs):
-    inputImage: Optional[InputImage] = None
-class CompareConfigs(Configs):
-    mainConfig: MainConfig
+    inputImage: InputImage
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
+
 class CompareOutputs(Outputs):
-    outputImage: Optional[OutputImage] = None
+    outputImage: OutputImage
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
+
 class CompareRequest(Request):
     inputs: Optional[CompareInputs] = None
     configs: CompareConfigs
     class Config: json_schema_extra = {"target": "configs"}
+
+class CompareConfigs(Configs):
+    mainConfig: MainConfig
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
+
 class CompareResponse(Response):
     outputs: CompareOutputs
+
 class Compare(Config):
     name: Literal["Compare"] = "Compare"
     value: Union[CompareRequest, CompareResponse]
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
     class Config:
-        title = "Görüntü Karşılaştırma"
+        title = "Resim Karşılaştırma"
         json_schema_extra = {"target": {"value": 0}}
 
 class FilterInputs(Inputs):
-    inputImage: Optional[InputImage] = None
-    inputDetections: Optional[InputDetections] = None
-class FilterConfigs(Configs):
-    mainConfig: MainConfig
+    inputImage: InputImage
+    inputDetections: InputDetections
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
+
 class FilterOutputs(Outputs):
-    outputImage: Optional[OutputImage] = None
-    outputDetections: Optional[OutputDetections] = None
+    outputImage: OutputImage
+    outputDetections: OutputDetections
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
+
 class FilterRequest(Request):
     inputs: Optional[FilterInputs] = None
     configs: FilterConfigs
     class Config: json_schema_extra = {"target": "configs"}
+
+class FilterConfigs(Configs):
+    mainConfig: MainConfig
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
+
 class FilterResponse(Response):
     outputs: FilterOutputs
+
 class Filter(Config):
     name: Literal["Filter"] = "Filter"
     value: Union[FilterRequest, FilterResponse]
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
     class Config:
-        title = "Görüntü Filtreleme"
+        title = "Resim Filtreleme"
         json_schema_extra = {"target": {"value": 0}}
 
 class ConfigExecutor(Config):
@@ -148,10 +174,13 @@ class ConfigExecutor(Config):
     value: Union[Compare, Filter]
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
-    class Config: title = "Görev Seçimi"
+    class Config: title = "Görev"
 
 class PackageConfigs(Configs):
     executor: ConfigExecutor
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
 
 class PackageModel(Package):
     configs: PackageConfigs

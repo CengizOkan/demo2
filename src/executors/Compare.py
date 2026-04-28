@@ -8,7 +8,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
 from sdks.novavision.src.base.component import Component
 from sdks.novavision.src.helper.executor import Executor
 from sdks.novavision.src.media.image import Image as SDKImage
-from sdks.novavision.src.base.model import Image as ImageModel
 from components.DemoPackage.src.utils.response import build_compare_response
 from components.DemoPackage.src.models.PackageModel import PackageModel
 
@@ -26,45 +25,45 @@ class Compare(Component):
         return {}
 
     def run(self):
-        # 1. SDK ve Fallback ile Resmi Al
-        self.input_image = self.request.get_param("inputImage")
-        if not self.input_image:
-            # Fallback mekanizması (önceki adımda yazdığımız)
-            def find_img(d):
-                if isinstance(d, dict):
-                    if "encoding" in d and "value" in d: return d
-                    for k, v in d.items():
-                        r = find_img(v)
-                        if r: return r
-                return None
+        # 1. Resim Yakalama (Ultimate Hunter)
+        def find_img(d):
+            if isinstance(d, dict):
+                if "encoding" in d and "value" in d: return d
+                for k, v in d.items():
+                    res = find_img(v)
+                    if res: return res
+            elif isinstance(d, list):
+                for i in d:
+                    res = find_img(i)
+                    if res: return res
+            return None
 
-            self.input_image = find_img(self.request.data)
+        img_dict = find_img(self.request.data)
 
-        # 2. Görüntü İşleme (Blur Uygulama)
-        if self.input_image:
-            # Base64 -> OpenCV formatı
-            cv_img = SDKImage.decode64(self.input_image)
+        if img_dict:
+            # 2. OpenCV İşleme
+            cv_img = SDKImage.decode64(img_dict)
 
-            # Config'den blur değerini al
+            # Parametreleri al
             conf = self.request.model.configs.executor.value.value.configs.mainConfig.value
-            k_size = 15  # Varsayılan
-
+            k_size = 21
             if conf.name == "ConfigMode":
-                k_size = int(conf.thresholdValue.value * 30) or 1
+                k_size = int(conf.threshold.value * 40) + 1
             else:
-                k_size = int(conf.advancedKernel.value)
+                k_size = int(conf.kernel.value)
 
-            if k_size % 2 == 0: k_size += 1  # Kernel tek sayı olmalı
+            if k_size % 2 == 0: k_size += 1
 
-            # Filtreyi uygula
+            # BLUR UYGULA
             processed = cv2.GaussianBlur(cv_img, (k_size, k_size), 0)
 
-            # OpenCV -> Base64 (SDK Image Model formatı)
-            mime = self.input_image.get("mime_type", "image/jpeg") if isinstance(self.input_image, dict) else getattr(
-                self.input_image, "mime_type", "image/jpeg")
+            # 3. Geri Dönüş Hazırlığı
+            mime = img_dict.get("mime_type", "image/jpeg")
             self.output_image = SDKImage.encode64(processed, mime)
         else:
-            self.output_image = self.input_image
+            # Fallback (ImageView çökmesin diye)
+            self.output_image = {"uID": "err", "mime_type": "image/png", "encoding": "base64",
+                                 "value": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="}
 
         return build_compare_response(context=self)
 

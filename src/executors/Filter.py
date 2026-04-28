@@ -24,23 +24,28 @@ class Filter(Component):
         return {}
 
     def run(self):
-        self.input_image = self.request.get_param("inputImage")
-        self.input_detections = self.request.get_param("inputDetections")
+        def find_img(d):
+            if isinstance(d, dict):
+                if "encoding" in d and "value" in d: return d
+                for k, v in d.items():
+                    res = find_img(v)
+                    if res: return res
+            return None
 
-        if self.input_image:
-            cv_img = SDKImage.decode64(self.input_image)
-            # Basit bir filtreleme (Grayscale örneği)
-            processed = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
-            processed = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+        img_dict = find_img(self.request.data)
+        self.input_detections = self.request.get_param("inputDetections") or []
 
-            mime = self.input_image.get("mime_type", "image/jpeg") if isinstance(self.input_image, dict) else getattr(
-                self.input_image, "mime_type", "image/jpeg")
-            self.output_image = SDKImage.encode64(processed, mime)
+        if img_dict:
+            cv_img = SDKImage.decode64(img_dict)
+            # Siyah Beyaz Filtre Uygula
+            gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+            processed = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+
+            self.output_image = SDKImage.encode64(processed, img_dict.get("mime_type", "image/jpeg"))
         else:
-            self.output_image = self.input_image
+            self.output_image = img_dict
 
         self.output_detections = self.input_detections
-
         return build_filter_response(context=self)
 
 
