@@ -9,7 +9,7 @@ from sdks.novavision.src.base.model import (
 # --- 1. GİRİŞ VE ÇIKIŞLAR ---
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
-    value: Union[List[Image], Image]
+    value: Optional[Union[List[Image], Image]] = None
     type: str = "object"
     @validator("type", pre=True, always=True)
     def set_type(cls, v, values):
@@ -18,13 +18,13 @@ class InputImage(Input):
 
 class InputDetections(Input):
     name: Literal["inputDetections"] = "inputDetections"
-    value: Union[List[Detection], Detection]
+    value: Optional[Union[List[Detection], Detection]] = None
     type: str = "object"
     class Config: title = "Giriş Tespitleri"
 
 class OutputImage(Output):
     name: Literal["outputImage"] = "outputImage"
-    value: Union[List[Image], Image]
+    value: Optional[Union[List[Image], Image]] = None
     type: str = "object"
     @validator("type", pre=True, always=True)
     def set_type(cls, v, values):
@@ -33,11 +33,11 @@ class OutputImage(Output):
 
 class OutputDetections(Output):
     name: Literal["outputDetections"] = "outputDetections"
-    value: Union[List[Detection], Detection]
+    value: Optional[Union[List[Detection], Detection]] = None
     type: str = "object"
     class Config: title = "Çıkış Tespitleri"
 
-# --- 2. KONFİGÜRASYON (UI İle Birebir Eşleşen İsimler) ---
+# --- 2. KONFİGÜRASYON (Arayüz Eksik Veri Gönderirse Çökmemesi İçin Optional Yapıldı) ---
 class BlurThreshold(Config):
     name: Literal["BlurThreshold"] = "BlurThreshold"
     value: float = Field(default=0.5, ge=0.0, le=1.0)
@@ -53,13 +53,14 @@ class FeatureOption(Config):
     class Config: title = "Özellik Durumu"
 
 class ConfigMode(Config):
-    # DÜZELTME: UI'ın beklediği orijinal isim "ConfigMode" olarak geri alındı
     name: Literal["ConfigMode"] = "ConfigMode"
-    blurThreshold: BlurThreshold
-    featureOption: FeatureOption
+    # HATANIN ÇÖZÜMÜ: Alanlar opsiyonel yapıldı
+    blurThreshold: Optional[BlurThreshold] = None
+    featureOption: Optional[FeatureOption] = None
     value: Literal["Basic"] = "Basic"
     type: Literal["string"] = "string"
-    field: Literal["option"] = "option"
+    # Arayüzün option yerine dropdownlist gönderme ihtimaline karşı tolerans
+    field: Literal["option", "dropdownlist"] = "option"
     class Config: title = "Temel Mod"
 
 class AdvancedKernel(Config):
@@ -73,24 +74,24 @@ class AlgoDropdown(Config):
     name: Literal["Gaussian"] = "Gaussian"
     value: Literal["Gaussian"] = "Gaussian"
     type: Literal["string"] = "string"
-    field: Literal["option"] = "option"
+    field: Literal["option", "dropdownlist"] = "option"
     class Config: title = "Gaussian"
 
 class ConfigAdvanced(Config):
-    # DÜZELTME: UI'ın beklediği orijinal isim "ConfigAdvanced" olarak geri alındı
     name: Literal["ConfigAdvanced"] = "ConfigAdvanced"
-    kernel: AdvancedKernel
-    algo: Union[AlgoDropdown] = Field(default_factory=AlgoDropdown)
+    # HATANIN ÇÖZÜMÜ: Alanlar opsiyonel yapıldı
+    kernel: Optional[AdvancedKernel] = None
+    algo: Optional[Union[AlgoDropdown]] = None
     value: Literal["Advanced"] = "Advanced"
     type: Literal["string"] = "string"
-    field: Literal["option"] = "option"
+    field: Literal["option", "dropdownlist"] = "option"
     class Config: title = "Gelişmiş Mod"
 
 class MainConfig(Config):
     name: Literal["MainConfig"] = "MainConfig"
     value: Union[ConfigMode, ConfigAdvanced] = Field(default_factory=ConfigMode)
     type: Literal["object"] = "object"
-    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
+    field: Literal["dependentDropdownlist", "dropdownlist"] = "dependentDropdownlist"
     class Config: title = "İşlem Modu"
 
 # --- 3. EXECUTOR ŞEMALARI ---
@@ -98,6 +99,9 @@ class CompareInputs(Inputs):
     inputImage: InputImage
 class CompareConfigs(Configs):
     mainConfig: MainConfig
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
 class CompareOutputs(Outputs):
     outputImage: OutputImage
 class CompareRequest(Request):
@@ -110,19 +114,22 @@ class Compare(Config):
     name: Literal["Compare"] = "Compare"
     value: Union[CompareRequest, CompareResponse] = Field(default_factory=CompareRequest)
     type: Literal["object"] = "object"
-    field: Literal["option"] = "option"
+    field: Literal["option", "dropdownlist"] = "option"
     class Config:
         title = "Compare"
         json_schema_extra = {"target": {"value": 0}}
 
 class FilterInputs(Inputs):
     inputImage: InputImage
-    inputDetections: InputDetections
+    inputDetections: Optional[InputDetections] = None
 class FilterConfigs(Configs):
     mainConfig: MainConfig
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
 class FilterOutputs(Outputs):
     outputImage: OutputImage
-    outputDetections: OutputDetections
+    outputDetections: Optional[OutputDetections] = None
 class FilterRequest(Request):
     inputs: Optional[FilterInputs] = None
     configs: FilterConfigs
@@ -133,7 +140,7 @@ class Filter(Config):
     name: Literal["Filter"] = "Filter"
     value: Union[FilterRequest, FilterResponse] = Field(default_factory=FilterRequest)
     type: Literal["object"] = "object"
-    field: Literal["option"] = "option"
+    field: Literal["option", "dropdownlist"] = "option"
     class Config:
         title = "Filter"
         json_schema_extra = {"target": {"value": 0}}
@@ -142,7 +149,7 @@ class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
     value: Union[Compare, Filter] = Field(default_factory=Compare)
     type: Literal["executor"] = "executor"
-    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
+    field: Literal["dependentDropdownlist", "dropdownlist"] = "dependentDropdownlist"
     class Config: title = "Task"
 
 class PackageConfigs(Configs):

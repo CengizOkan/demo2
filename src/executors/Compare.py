@@ -22,29 +22,28 @@ class Compare(Component):
         return {}
 
     def run(self):
-        # 1. SDK ile resmi çekiyoruz (Gelen şey bir Image objesidir)
         img = SDKImage.get_frame(img=self.input_image, redis_db=self.redis_db)
 
-        # 2. Objenin ve içindeki saf görüntü matrisinin (value) dolu olduğundan emin ol
         if img is not None and img.value is not None:
-            cv_img = img.value  # OpenCV'nin beklediği saf Numpy matrisi
+            cv_img = img.value
 
             conf = self.request.model.configs.executor.value.value.configs.mainConfig.value
-            k = 15
-            if conf.name == "ConfigModeBasic":
-                k = int(conf.blurThreshold.value * 30) + 1
-            else:
-                k = int(conf.kernel.value)
+            k = 15  # Varsayılan değer (Arayüz boş yollarsa sistem çökmesin diye)
+
+            # Parametreler Optional olduğu için güvenli erişim (getattr)
+            if conf.name == "ConfigMode":
+                bt = getattr(conf, "blurThreshold", None)
+                if bt and bt.value:
+                    k = int(bt.value * 30) + 1
+            elif conf.name == "ConfigAdvanced":
+                ak = getattr(conf, "kernel", None)
+                if ak and ak.value:
+                    k = int(ak.value)
 
             if k % 2 == 0: k += 1
 
-            # OpenCV işlemini saf matris (cv_img) üzerinde yap
             processed = cv2.GaussianBlur(cv_img, (k, k), 0)
-
-            # 3. İşlenmiş matrisi tekrar Image objesinin içine koy
             img.value = processed
-
-            # 4. Güncellenmiş objeyi Redis'e kaydet
             self.output_image = SDKImage.set_frame(img=img, package_uID=self.uID, redis_db=self.redis_db)
         else:
             self.output_image = self.input_image
