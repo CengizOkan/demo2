@@ -14,6 +14,7 @@ from components.DemoPackage.src.models.PackageModel import PackageModel
 class Compare(Component):
     def __init__(self, request, bootstrap):
         super().__init__(request, bootstrap)
+        # Initialize model from request data
         self.request.model = PackageModel(**(self.request.data))
         self.input_image = self.request.get_param("inputImage")
 
@@ -22,15 +23,16 @@ class Compare(Component):
         return {}
 
     def run(self):
+        # 1. Fetch frame from Redis as a numpy matrix
         img = SDKImage.get_frame(img=self.input_image, redis_db=self.redis_db)
 
         if img is not None and img.value is not None:
-            cv_img = img.value
+            cv_img = img.value  # Raw image matrix for OpenCV
 
+            # Fetch configuration parameters
             conf = self.request.model.configs.executor.value.value.configs.mainConfig.value
-            k = 15  # Varsayılan değer (Arayüz boş yollarsa sistem çökmesin diye)
+            k = 15  # Default kernel size
 
-            # Parametreler Optional olduğu için güvenli erişim (getattr)
             if conf.name == "ConfigMode":
                 bt = getattr(conf, "blurThreshold", None)
                 if bt and bt.value:
@@ -40,9 +42,13 @@ class Compare(Component):
                 if ak and ak.value:
                     k = int(ak.value)
 
+            # Ensure kernel size is odd for GaussianBlur
             if k % 2 == 0: k += 1
 
+            # Apply image processing (Blur)
             processed = cv2.GaussianBlur(cv_img, (k, k), 0)
+
+            # 2. Update object value and save back to Redis
             img.value = processed
             self.output_image = SDKImage.set_frame(img=img, package_uID=self.uID, redis_db=self.redis_db)
         else:

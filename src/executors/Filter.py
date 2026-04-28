@@ -19,19 +19,23 @@ class Filter(Component):
         self.input_detections = self.request.get_param("inputDetections") or []
 
     def run(self):
+        # 1. Fetch frame from Redis
         img = SDKImage.get_frame(img=self.input_image, redis_db=self.redis_db)
 
         if img is not None and img.value is not None:
             cv_img = img.value
 
+            # Apply grayscale effect (Visual evidence for 2-Input 2-Output task)
             gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
             processed = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
+            # 2. Save processed image back to Redis
             img.value = processed
             self.output_image = SDKImage.set_frame(img=img, package_uID=self.uID, redis_db=self.redis_db)
         else:
             self.output_image = self.input_image
 
+        # Passthrough detections to satisfy 2-Output requirement
         self.output_detections = self.input_detections
         return build_filter_response(context=self)
 
