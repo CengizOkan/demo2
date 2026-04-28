@@ -5,7 +5,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
 
 from sdks.novavision.src.base.component import Component
 from sdks.novavision.src.helper.executor import Executor
-from sdks.novavision.src.base.model import Image  # BU SATIRI EKLE
+from sdks.novavision.src.base.model import Image
 from components.DemoPackage.src.utils.response import build_compare_response
 from components.DemoPackage.src.models.PackageModel import PackageModel
 
@@ -23,35 +23,35 @@ class Compare(Component):
         return {}
 
     def run(self):
-        def extract_value(data, key):
-            if isinstance(data, dict):
-                if data.get("name") == key and "value" in data:
-                    return data.get("value")
-                if key in data and isinstance(data[key], dict) and "value" in data[key]:
-                    return data[key].get("value")
-                for k, v in data.items():
-                    res = extract_value(v, key)
-                    if res is not None:
-                        return res
-            elif isinstance(data, list):
-                for item in data:
-                    res = extract_value(item, key)
-                    if res is not None:
-                        return res
-            return None
+        self.output_image = None
 
-        self.input_image = self.request.get_param("inputImage")
+        # 1. En Güvenli Yöntem: Pydantic modeli üzerinden saf Image objesine erişim
+        try:
+            req_data = self.request.model.configs.executor.value.value
+            if req_data and req_data.inputs and req_data.inputs.inputImage:
+                # Bu değer zaten platformun beklediği %100 orijinal Image objesidir
+                self.output_image = req_data.inputs.inputImage.value
+        except Exception:
+            pass
 
-        if not self.input_image:
-            self.input_image = extract_value(self.request.data, "inputImage")
+        # 2. Alternatif Yöntem: Sadece 'value' içindeki orijinal veriyi çıkaran Fallback
+        if not self.output_image:
+            def get_inner_image(data):
+                if isinstance(data, dict):
+                    if data.get("name") == "inputImage" and "value" in data:
+                        val = data["value"]
+                        if isinstance(val, dict): return Image(**val)
+                        if isinstance(val, list): return [Image(**v) if isinstance(v, dict) else v for v in val]
+                    for k, v in data.items():
+                        res = get_inner_image(v)
+                        if res is not None: return res
+                elif isinstance(data, list):
+                    for item in data:
+                        res = get_inner_image(item)
+                        if res is not None: return res
+                return None
 
-        # C'deki type-casting mantığı: Gelen saf veriyi Image objesine dönüştür
-        if isinstance(self.input_image, dict):
-            self.output_image = Image(**self.input_image)
-        elif isinstance(self.input_image, list):
-            self.output_image = [Image(**item) if isinstance(item, dict) else item for item in self.input_image]
-        else:
-            self.output_image = self.input_image
+            self.output_image = get_inner_image(self.request.data)
 
         return build_compare_response(context=self)
 
