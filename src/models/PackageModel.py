@@ -49,12 +49,13 @@ class OutputDetections(Output):
     class Config: title = "Output Detections"
 
 
-# --- 2. DROPDOWN KONFİGÜRASYONU (UI'a Uygun Hale Getirildi) ---
+# --- 2. DROPDOWN KONFİGÜRASYONU (UI'a Tam Uyumlu) ---
 class OptionBlur(Config):
     name: Literal["Blur"] = "Blur"
     value: Literal["Blur"] = "Blur"
     type: Literal["string"] = "string"
-    field: Literal["option"] = "option"
+    # UI'ın tuhaf "dropdownlist" veya standart "option" yollamasına karşı tolerans
+    field: Literal["dropdownlist", "option"] = "dropdownlist"
 
     class Config: title = "Blur"
 
@@ -63,7 +64,7 @@ class OptionSharpen(Config):
     name: Literal["Sharpen"] = "Sharpen"
     value: Literal["Sharpen"] = "Sharpen"
     type: Literal["string"] = "string"
-    field: Literal["option"] = "option"
+    field: Literal["dropdownlist", "option"] = "dropdownlist"
 
     class Config: title = "Sharpen"
 
@@ -72,17 +73,17 @@ class OptionGrayscale(Config):
     name: Literal["Grayscale"] = "Grayscale"
     value: Literal["Grayscale"] = "Grayscale"
     type: Literal["string"] = "string"
-    field: Literal["option"] = "option"
+    field: Literal["dropdownlist", "option"] = "dropdownlist"
 
     class Config: title = "Grayscale"
 
 
 class ConfigFilterType(Config):
-    # UI tarafından PascalCase (ConfigFilterType) gönderildiği için Literal düzeltildi
     name: Literal["ConfigFilterType"] = "ConfigFilterType"
     value: Union[OptionBlur, OptionSharpen, OptionGrayscale] = Field(default_factory=OptionBlur)
     type: Literal["object"] = "object"
-    field: Literal["dropdownlist"] = "dropdownlist"
+    # HATANIN ÇÖZÜMÜ: UI'ın gönderdiği değere eşitlendi
+    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
 
     class Config: title = "Filtre Tipi"
 
