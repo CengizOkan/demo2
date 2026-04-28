@@ -6,10 +6,12 @@ from sdks.novavision.src.base.model import (
     Output, Input, Config
 )
 
+
 # --- 1. GİRİŞ/ÇIKIŞ TANIMLARI ---
+# Portlara veri bağlanmama ihtimaline karşı value ve class atamaları Optional yapıldı.
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
-    value: Union[List[Image], Image]
+    value: Optional[Union[List[Image], Image]] = None
     type: str = "object"
 
     @validator("type", pre=True, always=True)
@@ -26,7 +28,7 @@ class InputImage(Input):
 
 class InputDetections(Input):
     name: Literal["inputDetections"] = "inputDetections"
-    value: Union[List[Detection], Detection]
+    value: Optional[Union[List[Detection], Detection]] = None
     type: str = "object"
 
     class Config: title = "Input Detections"
@@ -34,7 +36,7 @@ class InputDetections(Input):
 
 class OutputImage(Output):
     name: Literal["outputImage"] = "outputImage"
-    value: Union[List[Image], Image]
+    value: Optional[Union[List[Image], Image]] = None
     type: str = "object"
 
     @validator("type", pre=True, always=True)
@@ -51,7 +53,7 @@ class OutputImage(Output):
 
 class OutputDetections(Output):
     name: Literal["outputDetections"] = "outputDetections"
-    value: Union[List[Detection], Detection]
+    value: Optional[Union[List[Detection], Detection]] = None
     type: str = "object"
 
     class Config: title = "Output Detections"
@@ -113,9 +115,9 @@ class ConfigAdvanced(Config):
 
     class Config: title = "Gelişmiş Mod"
 
-
-class MainConfig(Config):
-    name: Literal["MainConfig"] = "MainConfig"
+# UI'dan gelen JSON ile eşleşmesi için ismi "configFilterType" olarak güncellendi
+class ConfigFilterType(Config):
+    name: Literal["configFilterType"] = "configFilterType"
     value: Union[ConfigMode, ConfigAdvanced]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
@@ -125,21 +127,23 @@ class MainConfig(Config):
 
 # --- 3. EXECUTOR 1: Compare ---
 class CompareInputs(Inputs):
-    inputImage: InputImage
+    # Port boş bırakılabilir
+    inputImage: Optional[InputImage] = None
     value: str = "Inputs"
     type: Literal["object"] = "object"
     field: Literal["input"] = "input"
 
 
 class CompareConfigs(Configs):
-    mainConfig: MainConfig
+    # UI'daki isme uyumlu Config
+    configFilterType: ConfigFilterType
     value: str = "Configs"
     type: Literal["object"] = "object"
     field: Literal["config"] = "config"
 
 
 class CompareOutputs(Outputs):
-    outputImage: OutputImage
+    outputImage: Optional[OutputImage] = None
     type: Literal["object"] = "object"
     field: Literal["output"] = "output"
 
@@ -168,23 +172,25 @@ class Compare(Config):
 
 # --- 4. EXECUTOR 2: Filter ---
 class FilterInputs(Inputs):
-    inputImage: InputImage
-    inputDetections: InputDetections
+    # Portlar boş bırakılabilir
+    inputImage: Optional[InputImage] = None
+    inputDetections: Optional[InputDetections] = None
     value: str = "Inputs"
     type: Literal["object"] = "object"
     field: Literal["input"] = "input"
 
 
 class FilterConfigs(Configs):
-    mainConfig: MainConfig
+    # UI'daki isme uyumlu Config
+    configFilterType: ConfigFilterType
     value: str = "Configs"
     type: Literal["object"] = "object"
     field: Literal["config"] = "config"
 
 
 class FilterOutputs(Outputs):
-    outputImage: OutputImage
-    outputDetections: OutputDetections
+    outputImage: Optional[OutputImage] = None
+    outputDetections: Optional[OutputDetections] = None
     type: Literal["object"] = "object"
     field: Literal["output"] = "output"
 
