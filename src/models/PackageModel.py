@@ -37,7 +37,7 @@ class OutputDetections(Output):
     type: str = "object"
     class Config: title = "Çıkış Tespitleri"
 
-# --- 2. KONFİGÜRASYON (Trello: 2 Seçenek, Her Biri 2 Alan) ---
+# --- 2. KONFİGÜRASYON PARAMETRELERİ (Trello Şartları) ---
 class ThresholdValue(Config):
     name: Literal["ThresholdValue"] = "ThresholdValue"
     value: float = Field(default=0.5, ge=0.0, le=1.0)
@@ -61,14 +61,13 @@ class DependentDrop(Config):
 
 class ConfigMode(Config):
     name: Literal["ConfigMode"] = "ConfigMode"
-    thresholdValue: ThresholdValue # Alan 1
-    dependentDrop: DependentDrop   # Alan 2
+    thresholdValue: ThresholdValue
+    dependentDrop: DependentDrop
     value: Literal["Basic"] = "Basic"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
     class Config: title = "Temel Mod"
 
-# Gelişmiş Mod için 2 yeni alan eklendi
 class AdvancedKernel(Config):
     name: Literal["AdvancedKernel"] = "AdvancedKernel"
     value: int = Field(default=21, ge=1, le=99)
@@ -92,8 +91,8 @@ class AdvancedAlgo(Config):
 
 class ConfigAdvanced(Config):
     name: Literal["ConfigAdvanced"] = "ConfigAdvanced"
-    kernel: AdvancedKernel # Alan 1
-    algo: AdvancedAlgo     # Alan 2
+    kernel: AdvancedKernel
+    algo: AdvancedAlgo
     value: Literal["Advanced"] = "Advanced"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -106,51 +105,69 @@ class MainConfig(Config):
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
     class Config: title = "Çalışma Modu"
 
-# --- 3. EXECUTOR YAPILARI ---
+# --- 3. EXECUTOR 1: Compare ---
 class CompareInputs(Inputs):
     inputImage: InputImage
+
 class CompareConfigs(Configs):
     mainConfig: MainConfig
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
+
 class CompareOutputs(Outputs):
     outputImage: OutputImage
+
 class CompareRequest(Request):
     inputs: Optional[CompareInputs] = None
-    configs: CompareConfigs
+    configs: CompareConfigs # Artık yukarıda tanımlı olduğu için hata vermez
     class Config: json_schema_extra = {"target": "configs"}
+
 class CompareResponse(Response):
     outputs: CompareOutputs
+
 class Compare(Config):
     name: Literal["Compare"] = "Compare"
     value: Union[CompareRequest, CompareResponse] = Field(default_factory=CompareRequest)
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
     class Config:
-        title = "Compare"
+        title = "Resim Karşılaştırma"
         json_schema_extra = {"target": {"value": 0}}
 
+# --- 4. EXECUTOR 2: Filter ---
 class FilterInputs(Inputs):
     inputImage: InputImage
     inputDetections: InputDetections
+
 class FilterConfigs(Configs):
     mainConfig: MainConfig
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
+
 class FilterOutputs(Outputs):
     outputImage: OutputImage
     outputDetections: OutputDetections
+
 class FilterRequest(Request):
     inputs: Optional[FilterInputs] = None
-    configs: FilterConfigs
+    configs: FilterConfigs # Artık yukarıda tanımlı olduğu için hata vermez
     class Config: json_schema_extra = {"target": "configs"}
+
 class FilterResponse(Response):
     outputs: FilterOutputs
+
 class Filter(Config):
     name: Literal["Filter"] = "Filter"
     value: Union[FilterRequest, FilterResponse] = Field(default_factory=FilterRequest)
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
     class Config:
-        title = "Filter"
+        title = "Resim Filtreleme"
         json_schema_extra = {"target": {"value": 0}}
 
+# --- 5. PAKET KÖK TANIMI ---
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
     value: Union[Compare, Filter] = Field(default_factory=Compare)
