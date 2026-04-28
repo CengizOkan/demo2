@@ -6,24 +6,27 @@ from sdks.novavision.src.base.model import (
     Output, Input, Config
 )
 
-
 # --- 1. GİRİŞ/ÇIKIŞ TANIMLARI ---
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
-    value: Optional[Union[List[Image], Image]] = None
+    value: Union[List[Image], Image]
     type: str = "object"
 
     @validator("type", pre=True, always=True)
     def set_type_based_on_value(cls, value, values):
-        val = values.get('value') if isinstance(values, dict) else getattr(values, 'value', None)
-        return "object" if isinstance(val, Image) else "list"
+        val = values.get('value')
+        if isinstance(val, Image):
+            return "object"
+        elif isinstance(val, list):
+            return "list"
+        return "object"
 
     class Config: title = "Input Image"
 
 
 class InputDetections(Input):
     name: Literal["inputDetections"] = "inputDetections"
-    value: Optional[Union[List[Detection], Detection]] = None
+    value: Union[List[Detection], Detection]
     type: str = "object"
 
     class Config: title = "Input Detections"
@@ -31,20 +34,24 @@ class InputDetections(Input):
 
 class OutputImage(Output):
     name: Literal["outputImage"] = "outputImage"
-    value: Optional[Union[List[Image], Image]] = None
+    value: Union[List[Image], Image]
     type: str = "object"
 
     @validator("type", pre=True, always=True)
     def set_type_based_on_value(cls, value, values):
-        val = values.get('value') if isinstance(values, dict) else getattr(values, 'value', None)
-        return "object" if isinstance(val, Image) else "list"
+        val = values.get('value')
+        if isinstance(val, Image):
+            return "object"
+        elif isinstance(val, list):
+            return "list"
+        return "object"
 
     class Config: title = "Output Image"
 
 
 class OutputDetections(Output):
     name: Literal["outputDetections"] = "outputDetections"
-    value: Optional[Union[List[Detection], Detection]] = None
+    value: Union[List[Detection], Detection]
     type: str = "object"
 
     class Config: title = "Output Detections"
@@ -80,17 +87,17 @@ class OptionDisable(Config):
 
 class DependentDrop(Config):
     name: Literal["DependentDrop"] = "DependentDrop"
-    value: Union[OptionEnable, OptionDisable] = Field(default_factory=lambda: OptionEnable())
+    value: Union[OptionEnable, OptionDisable]
     type: Literal["object"] = "object"
-    field: Literal["dropdownlist"] = "dropdownlist"
+    field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
 
     class Config: title = "Feature Status"
 
 
 class ConfigMode(Config):
     name: Literal["ConfigMode"] = "ConfigMode"
-    thresholdValue: Optional[ThresholdValue] = None
-    dependentDrop: Optional[DependentDrop] = None
+    thresholdValue: ThresholdValue
+    dependentDrop: DependentDrop
     value: Literal["Basic"] = "Basic"
     type: Literal["string"] = "string"
     field: Literal["option"] = "option"
@@ -109,7 +116,7 @@ class ConfigAdvanced(Config):
 
 class MainConfig(Config):
     name: Literal["MainConfig"] = "MainConfig"
-    value: Union[ConfigMode, ConfigAdvanced] = Field(default_factory=lambda: ConfigMode())
+    value: Union[ConfigMode, ConfigAdvanced]
     type: Literal["object"] = "object"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
 
@@ -118,31 +125,39 @@ class MainConfig(Config):
 
 # --- 3. EXECUTOR 1: Compare ---
 class CompareInputs(Inputs):
-    inputImage: Optional[InputImage] = None
+    inputImage: InputImage
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
 
 
 class CompareConfigs(Configs):
-    mainConfig: Optional[MainConfig] = None
+    mainConfig: MainConfig
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
 
 
 class CompareOutputs(Outputs):
-    outputImage: Optional[OutputImage] = None
+    outputImage: OutputImage
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
 
 
 class CompareRequest(Request):
     inputs: Optional[CompareInputs] = None
-    configs: Optional[CompareConfigs] = None
+    configs: CompareConfigs
 
     class Config: json_schema_extra = {"target": "configs"}
 
 
 class CompareResponse(Response):
-    outputs: Optional[CompareOutputs] = None
+    outputs: CompareOutputs
 
 
 class Compare(Config):
     name: Literal["Compare"] = "Compare"
-    value: Union[CompareRequest, CompareResponse] = Field(default_factory=CompareRequest)
+    value: Union[CompareRequest, CompareResponse]
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
 
@@ -153,33 +168,41 @@ class Compare(Config):
 
 # --- 4. EXECUTOR 2: Filter ---
 class FilterInputs(Inputs):
-    inputImage: Optional[InputImage] = None
-    inputDetections: Optional[InputDetections] = None
+    inputImage: InputImage
+    inputDetections: InputDetections
+    value: str = "Inputs"
+    type: Literal["object"] = "object"
+    field: Literal["input"] = "input"
 
 
 class FilterConfigs(Configs):
-    mainConfig: Optional[MainConfig] = None
+    mainConfig: MainConfig
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
 
 
 class FilterOutputs(Outputs):
-    outputImage: Optional[OutputImage] = None
-    outputDetections: Optional[OutputDetections] = None
+    outputImage: OutputImage
+    outputDetections: OutputDetections
+    type: Literal["object"] = "object"
+    field: Literal["output"] = "output"
 
 
 class FilterRequest(Request):
     inputs: Optional[FilterInputs] = None
-    configs: Optional[FilterConfigs] = None
+    configs: FilterConfigs
 
     class Config: json_schema_extra = {"target": "configs"}
 
 
 class FilterResponse(Response):
-    outputs: Optional[FilterOutputs] = None
+    outputs: FilterOutputs
 
 
 class Filter(Config):
     name: Literal["Filter"] = "Filter"
-    value: Union[FilterRequest, FilterResponse] = Field(default_factory=FilterRequest)
+    value: Union[FilterRequest, FilterResponse]
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
 
@@ -191,7 +214,7 @@ class Filter(Config):
 # --- 5. PAKET KÖK TANIMI ---
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
-    value: Union[Compare, Filter] = Field(default_factory=Compare)
+    value: Union[Compare, Filter]
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
 
@@ -199,10 +222,13 @@ class ConfigExecutor(Config):
 
 
 class PackageConfigs(Configs):
-    executor: Optional[ConfigExecutor] = None
+    executor: ConfigExecutor
+    value: str = "Configs"
+    type: Literal["object"] = "object"
+    field: Literal["config"] = "config"
 
 
 class PackageModel(Package):
-    configs: Optional[PackageConfigs] = None
+    configs: PackageConfigs
     type: Literal["component"] = "component"
     name: Literal["DemoPackage"] = "DemoPackage"
