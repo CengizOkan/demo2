@@ -17,29 +17,39 @@ class Filter(Component):
         except Exception:
             pass
 
-        self.input_image = self.request.get_param("inputImage")
-        self.input_detections = self.request.get_param("inputDetections")
-
-        if not self.input_image:
-            try:
-                executor_val = self.request.data.get("executor", {}).get("value", {})
-                inputs = executor_val.get("value", {}).get("inputs",
-                                                           {}) if "value" in executor_val else executor_val.get(
-                    "inputs", {})
-                if "inputImage" in inputs:
-                    self.input_image = inputs["inputImage"].get("value")
-                if "inputDetections" in inputs:
-                    self.input_detections = inputs["inputDetections"].get("value")
-            except Exception:
-                pass
-
     @staticmethod
     def bootstrap(config: dict) -> dict:
         return {}
 
     def run(self):
+        def extract_value(data, key):
+            if isinstance(data, dict):
+                if data.get("name") == key and "value" in data:
+                    return data.get("value")
+                if key in data and isinstance(data[key], dict) and "value" in data[key]:
+                    return data[key].get("value")
+                for k, v in data.items():
+                    res = extract_value(v, key)
+                    if res is not None:
+                        return res
+            elif isinstance(data, list):
+                for item in data:
+                    res = extract_value(item, key)
+                    if res is not None:
+                        return res
+            return None
+
+        self.input_image = self.request.get_param("inputImage")
+        self.input_detections = self.request.get_param("inputDetections")
+
+        if not self.input_image:
+            self.input_image = extract_value(self.request.data, "inputImage")
+        if not self.input_detections:
+            self.input_detections = extract_value(self.request.data, "inputDetections")
+
         self.output_image = self.input_image
         self.output_detections = self.input_detections
+
         return build_filter_response(context=self)
 
 

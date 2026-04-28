@@ -26,8 +26,8 @@ def build_compare_response(context):
 def build_filter_response(context):
     output_image = OutputImage(value=context.output_image)
     output_dets = OutputDetections(value=context.output_detections)
-    outputs = FilterOutputs(outputImage=output_image, outputDetections=output_dets)
 
+    outputs = FilterOutputs(outputImage=output_image, outputDetections=output_dets)
     response = FilterResponse(outputs=outputs)
     executor = Filter(value=response)
     config_executor = ConfigExecutor(value=executor)
