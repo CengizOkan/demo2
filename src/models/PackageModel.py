@@ -13,9 +13,11 @@ class InputImage(Input):
     type: str = "object"
 
     @validator("type", pre=True, always=True)
-    def set_type_based_on_value(cls, value, values):
-        val = values.get('value') if isinstance(values, dict) else getattr(values, 'value', None)
-        return "object" if isinstance(val, Image) else "list"
+    def set_type_based_on_value(cls, v, values):
+        val = values.get('value')
+        if isinstance(val, list):
+            return "list"
+        return "object"
 
     class Config: title = "Input Image"
 
@@ -34,9 +36,11 @@ class OutputImage(Output):
     type: str = "object"
 
     @validator("type", pre=True, always=True)
-    def set_type_based_on_value(cls, value, values):
-        val = values.get('value') if isinstance(values, dict) else getattr(values, 'value', None)
-        return "object" if isinstance(val, Image) else "list"
+    def set_type_based_on_value(cls, v, values):
+        val = values.get('value')
+        if isinstance(val, list):
+            return "list"
+        return "object"
 
     class Config: title = "Output Image"
 
@@ -49,12 +53,11 @@ class OutputDetections(Output):
     class Config: title = "Output Detections"
 
 
-# --- 2. DROPDOWN KONFİGÜRASYONU (UI'a Tam Uyumlu) ---
+# --- 2. DROPDOWN KONFİGÜRASYONU ---
 class OptionBlur(Config):
     name: Literal["Blur"] = "Blur"
     value: Literal["Blur"] = "Blur"
     type: Literal["string"] = "string"
-    # UI'ın tuhaf "dropdownlist" veya standart "option" yollamasına karşı tolerans
     field: Literal["dropdownlist", "option"] = "dropdownlist"
 
     class Config: title = "Blur"
@@ -82,7 +85,6 @@ class ConfigFilterType(Config):
     name: Literal["ConfigFilterType"] = "ConfigFilterType"
     value: Union[OptionBlur, OptionSharpen, OptionGrayscale] = Field(default_factory=OptionBlur)
     type: Literal["object"] = "object"
-    # HATANIN ÇÖZÜMÜ: UI'ın gönderdiği değere eşitlendi
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
 
     class Config: title = "Filtre Tipi"
